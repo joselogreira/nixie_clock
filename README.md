@@ -47,7 +47,7 @@ For the sake of completeness, these files are also included [here][special].
 - MCU: ATmega324pb 
 - (pending)
 
-[clock_pcb]: /img/clock_pcb.jpg "Nixie Clock Circuit"
+[clock_pcb]: https://raw.githubusercontent.com/joselogreira/nixie_clock/master/img/clock_pcb.png "Nixie Clock Circuit"
 [Nuvitron]: <https://nuvitron.com>
 [avr-gcc]: <https://www.microchip.com/mplab/avr-support/avr-and-arm-toolchains-c-compilers>
 [avr-libc]: <https://www.nongnu.org/avr-libc/user-manual/overview.html>
