@@ -47,6 +47,12 @@ For the sake of completeness, these files are also included [here][special].
 - MCU: ATmega324pb 
 - (pending)
 
+---
+
+## License
+
+Released under the [MIT License][license] - 2020 Jose Logreira
+
 [clock_pcb]: https://raw.githubusercontent.com/joselogreira/nixie_clock/master/img/clock_pcb.png "Nixie Clock Circuit"
 [Nuvitron]: <https://nuvitron.com>
 [avr-gcc]: <https://www.microchip.com/mplab/avr-support/avr-and-arm-toolchains-c-compilers>
@@ -58,3 +64,4 @@ For the sake of completeness, these files are also included [here][special].
 [astudio]: https://www.microchip.com/mplab/avr-support/atmel-studio-7
 [324pb]: http://ww1.microchip.com/downloads/en/DeviceDoc/40001908A.pdf
 [mk2]: http://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-42093-AVR-ISP-mkII_UserGuide.pdf
+[license]: /LICENSE
