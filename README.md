@@ -1,6 +1,8 @@
 
 # **The Nixie Tube Clock** by [Nuvitron]
 
+![alt text][clock_pcb]
+
 At Nuvitron, I led the electronics development of The Nixie Clock hardware included in some of their models. This repository starts from the production version of the clock circuit, and includes further improvements in the form of:
 
 - Code refactoring
@@ -43,15 +45,16 @@ For the sake of completeness, these files are also included [here][special].
 
 ## Hardware Characteristics:
 - MCU: ATmega324pb 
-(pending)
+- (pending)
 
+[clock_pcb]: /img/clock_pcb.jpg "Nixie Clock Circuit"
 [Nuvitron]: <https://nuvitron.com>
 [avr-gcc]: <https://www.microchip.com/mplab/avr-support/avr-and-arm-toolchains-c-compilers>
 [avr-libc]: <https://www.nongnu.org/avr-libc/user-manual/overview.html>
 [avrdude]: <https://www.nongnu.org/avrdude/>
 [usbasp]: <https://www.fischl.de/usbasp/>
 [Here's one]: <http://maxembedded.com/2015/06/setting-up-avr-gcc-toolchain-on-linux-and-mac-os-x/>
-[special]: /tree/master/special/
+[special]: /special/
 [astudio]: https://www.microchip.com/mplab/avr-support/atmel-studio-7
 [324pb]: http://ww1.microchip.com/downloads/en/DeviceDoc/40001908A.pdf
 [mk2]: http://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-42093-AVR-ISP-mkII_UserGuide.pdf
