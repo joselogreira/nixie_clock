@@ -20,7 +20,6 @@
 ******************************************************************************/
 
 #include "uart.h"
-#include "config.h"
 
 #include <avr/io.h>
 #include <stdint.h>
@@ -37,12 +36,12 @@
 ******************* F U N C T I O N   D E F I N I T I O N S *******************
 ******************************************************************************/
 
-// prototype functions with local scope
 static uint8_t uart_flush(void);
 
-void uart_init(void){
-
-		/*Set baud rate */
+/*===========================================================================*/
+void uart_init(void)
+{
+	/*Set baud rate */
 	UBRR2H = (uint8_t) (BAUD_REGISTER>>8);
 	UBRR2L = (uint8_t) (BAUD_REGISTER & 0x00FF);
 
@@ -56,8 +55,9 @@ void uart_init(void){
 	UCSR2C |= (1<<UCSZ1) | (1<<UCSZ0);
 }
 
-void uart_send_char( char data ){
-	
+/*===========================================================================*/
+void uart_send_char( char data )
+{
 	/* Wait for empty transmit buffer */
 	while ( !( UCSR2A & (1<<UDRE)) );
 
@@ -68,8 +68,9 @@ void uart_send_char( char data ){
 	while ( !( UCSR2A & (1<<UDRE)) );
 }
 
-void uart_send_string(const char *s){
-
+/*===========================================================================*/
+void uart_send_string(const char *s)
+{
 	while (*s != '\0')
 	{
 		uart_send_char(*s);
@@ -77,8 +78,9 @@ void uart_send_string(const char *s){
 	}
 }
 
-void uart_send_string_p(const char *s){
-
+/*===========================================================================*/
+void uart_send_string_p(const char *s)
+{
 	while (pgm_read_byte(s) != '\0')
 	{
 		uart_send_char(pgm_read_byte(s));
@@ -86,8 +88,9 @@ void uart_send_string_p(const char *s){
 	}
 }
 
-char uart_read_char( void ){
-
+/*===========================================================================*/
+char uart_read_char( void )
+{
 	/* Wait for data to be received */
 	while (!(UCSR2A & (1<<RXC)));
 
@@ -95,8 +98,9 @@ char uart_read_char( void ){
 	return UDR2;
 }
 
-void uart_set(uint8_t state){
-
+/*===========================================================================*/
+void uart_set(uint8_t state)
+{
 	if(state){
 		/* Enable receiver and transmitter */
 		UCSR2B |= (1<<RXEN)|(1<<TXEN);
@@ -107,8 +111,9 @@ void uart_set(uint8_t state){
 	}
 }
 
-uint8_t uart_check_rx(void){
-
+/*===========================================================================*/
+uint8_t uart_check_rx(void)
+{
 	uint8_t x;
 
 	// test three times. If any is wrong, return FALSE
@@ -125,8 +130,9 @@ uint8_t uart_check_rx(void){
 	return x;
 }
 
-static uint8_t uart_flush(void){
-
+/*===========================================================================*/
+static uint8_t uart_flush(void)
+{
 	char trash;
 
 	while ((UCSR2A & (1<<RXC))){

@@ -14,7 +14,7 @@
  * - Basically, there's one infinite loop: the main application loop
  * - Missing a second loop to operate all the debug and test modes to be 
  *   implemented
- * - Usr/operator should decides which one to enter at boot time, either using 
+ * - Usr/operator decides which one to enter at boot time, either using 
  *   buttons or by other mechanism
  * - Application loop: implemented as a big switch statement, similar to a
  *   Finite State Machine. States are linked to the information displayed and 
@@ -88,7 +88,7 @@ LOCKBITS = LOCK_BITS;
 *       are properly updated within every SYSTEM STATE. Structture used by a
 *       periodic ISR to update Nixie tubes display .
 *   - btnX/Y/Z: buttons-related states, counters, timers and flags
-*/  
+*/
 
 time_s time;
 alarm_s alarm;
@@ -276,10 +276,18 @@ RESET:
         }
         
         // BUTTONS check: Buttons are detected using an ISR which sets btnXYZ
-        // flag. Once set, the rest of the detection and debounce routine is
+        // flags. Once set, the rest of the detection and debounce routine is
         // handled within buttons_check(), based on the 1ms execution period of
         // the main infinite loop
-        if((btnX.query) || (btnY.query) || (btnZ.query)) buttons_check();
+        //if((btnX.query) || (btnY.query) || (btnZ.query)) buttons_check();
+        //if((btnX.query) || (btnY.query) || (btnZ.query)) {
+        //    buttons_check(&btnX);
+        //    buttons_check(&btnY);
+        //    buttons_check(&btnZ);
+        //}
+        if(btnX.query) buttons_check(&btnX);
+        if(btnY.query) buttons_check(&btnY);
+        if(btnZ.query) buttons_check(&btnZ);
         
         /* 
         * LOOP DELAY AND INTERRUPT ENABLE TIME --------------------------------
@@ -372,8 +380,8 @@ ISR(TIMER2_OVF_vect){
         // no matter what the clock is doing
         if(check_alarm()) system_state = ALARM_TRIGGERED;
 
-        // if power adapter is connected (the other possibility is that the MCU may
-        // be running with the coin cell battery):
+        // if power adapter is connected (if not, the MCU is powered be running 
+        // with the coin cell battery):
         // - toggle LED
         // - send time with UART
         // if not connected, do not report time nor toggle led.
@@ -464,28 +472,32 @@ ISR(TIMER3_COMPA_vect){
 *   or keep normal execution.
 */
 
-ISR(PCINT1_vect){
-
-    /* buttons     
-    BTN_X       - PB5 - PCINT13 | -> PCI1
-    BTN_Y       - PB6 - PCINT14 | -> PCI1
-    BTN_Z       - PB7 - PCINT15 | -> PCI1 
-    */
-    if((!BUTTON_X) && (!(btnX.lock))){
+/*===========================================================================*/
+/* 
+* buttons     
+* BTN_X       - PB5 - PCINT13 | -> PCI1
+* BTN_Y       - PB6 - PCINT14 | -> PCI1
+* BTN_Z       - PB7 - PCINT15 | -> PCI1 
+*/
+ISR(PCINT1_vect)
+{
+    if((!(btnX.check)()) && (!(btnX.lock))){
         btnX.query = TRUE;
-    } else if((!BUTTON_Y) && (!(btnY.lock))){
+    } else if((!(btnY.check)()) && (!(btnY.lock))){
         btnY.query = TRUE;
-    } else if((!BUTTON_Z) && (!(btnZ.lock))){
+    } else if((!(btnZ.check)()) && (!(btnZ.lock))){
         btnZ.query = TRUE;
     }
 }
 
-ISR(PCINT2_vect){
-
-    /* External power
-    * if external power is removed, enter in power save mode 
-    * EXT_PWR     - PC2 - PCINT18  | -> PCI2
-    */
+/*===========================================================================*/
+/* 
+* External power
+* if external power is removed, enter in power save mode 
+* EXT_PWR     - PC2 - PCINT18  | -> PCI2
+*/
+ISR(PCINT2_vect)
+{
     if(!EXT_PWR){
         // Boost is automatically powered off (12V removed)
         RTC_SIGNAL_SET(LOW);          // Dont use RTC LED

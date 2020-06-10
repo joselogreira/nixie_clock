@@ -22,12 +22,6 @@
 ******************************************************************************/
 
 #include "menu_time.h"
-#include "buzzer.h"
-#include "config.h"
-#include "math.h"
-#include "timers.h"
-#include "uart.h"
-#include "util.h"
 
 #include <avr/pgmspace.h>
 #include <stdint.h>
@@ -49,53 +43,36 @@
 #define LED_BLUE 	3
 
 // Vectors used for the transitions in different display animations
-static const uint8_t animation_3d_t1[] PROGMEM = {3,8,9,4,0,5,7,2,6,1,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
-static const uint8_t animation_3d_t2[] PROGMEM = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,1,6,2,7,5,0,4,9,8,3};
-static const uint8_t animation_3d[] PROGMEM = {3,8,9,4,0,5,7,2,6,1,6,2,7,5,0,4,9,8};
-static const uint8_t positions_3d[] PROGMEM = {4,9,7,0,3,5,8,6,1,2,1,6,8,5,3,0,7,9};
+static const uint8_t animation_3d_t1[] PROGMEM = {
+	3,8,9,4,0,5,7,2,6,1,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF
+};
+static const uint8_t animation_3d_t2[] PROGMEM = {
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,1,6,2,7,5,0,4,9,8,3
+};
+static const uint8_t animation_3d[] PROGMEM = {
+	3,8,9,4,0,5,7,2,6,1,6,2,7,5,0,4,9,8
+};
+static const uint8_t positions_3d[] PROGMEM = {
+	4,9,7,0,3,5,8,6,1,2,1,6,8,5,3,0,7,9
+};
 
 // LEDs PWM values for breathing effect
-// the names led_x_xx[] refer to the scale factor (x,xx) applied to a prototype
-// quadratic function. Used during display_time() for LEDs effects.
-static const uint8_t led_0_2[] PROGMEM = {
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,
-	2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,5,5,5,
-	5,5,5,5,5,6,6,6,6,6,6,6,7,7,7,7,7,7,7,8,8,8,8,8,8,8,9,9,9,9,9,9,10,10,10,
-	10,10,10,11,11,11,11,11,12,12,12,12,12,13,13,13,13,13,14,14,14,14,14,15,15,
-	15,15,15,16,16,16,16,17,17,17,17,18,18,18,18,18,19,19,19,19,20,20,20,20,21,
-	21,21,21,22,22,22,23,23,23,23,24,24,24,24,25,25,25,26,26,26,26,27,27,27,28,
-	28,28,28,29,29,29,30,30,30,31,31,31,32,32,32,32,33,33,33,34,34,34,35,35,35,
-	36,36,36,37,37,37,38,38,39,39,39,40,40,40,41,41,41,42,42,42,43,43,44,44,44,
-	45,45,45,46,46,47,47,47,48,48,49,49,49,50,50,51};
-static const uint8_t led_0_08[] PROGMEM = {
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
-	2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
-	4,5,5,5,5,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,6,6,7,7,7,7,7,7,7,7,7,7,7,
-	8,8,8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,9,9,10,10,10,10,10,10,10,10,10,11,11,11,
-	11,11,11,11,11,11,12,12,12,12,12,12,12,12,13,13,13,13,13,13,13,13,14,14,14,
-	14,14,14,14,14,15,15,15,15,15,15,15,16,16,16,16,16,16,16,17,17,17,17,17,17,
-	17,18,18,18,18,18,18,18,19,19,19,19,19,19,20,20,20,20,20,20,21};
-static const uint8_t led_0_12[] PROGMEM = {
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-	1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,
-	3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,
-	6,7,7,7,7,7,7,7,7,7,8,8,8,8,8,8,8,8,9,9,9,9,9,9,9,9,10,10,10,10,10,10,10,11,
-	11,11,11,11,11,11,12,12,12,12,12,12,12,13,13,13,13,13,13,14,14,14,14,14,14,
-	15,15,15,15,15,15,16,16,16,16,16,16,17,17,17,17,17,17,18,18,18,18,18,19,19,
-	19,19,19,20,20,20,20,20,20,21,21,21,21,21,22,22,22,22,22,23,23,23,23,24,24,
-	24,24,24,25,25,25,25,25,26,26,26,26,27,27,27,27,27,28,28,28,28,29,29,29,29,
-	30,30,30,30,31};
-static const uint8_t led_0_26[] PROGMEM = {
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,
-	2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,6,6,6,6,6,
-	6,6,7,7,7,7,7,7,8,8,8,8,8,8,9,9,9,9,9,10,10,10,10,10,11,11,11,11,11,12,12,
-	12,12,13,13,13,13,13,14,14,14,14,15,15,15,15,16,16,16,16,17,17,17,17,18,18,
-	18,19,19,19,19,20,20,20,21,21,21,21,22,22,22,23,23,23,24,24,24,24,25,25,25,
-	26,26,26,27,27,27,28,28,28,29,29,29,30,30,31,31,31,32,32,32,33,33,33,34,34,
-	35,35,35,36,36,36,37,37,38,38,38,39,39,40,40,40,41,41,42,42,43,43,43,44,44,
-	45,45,45,46,46,47,47,48,48,49,49,49,50,50,51,51,52,52,53,53,54,54,55,55,56,
-	56,57,57,57,58,58,59,59,60,60,61,61,62,62,63,63,64,65,65,66};
+// 250 values. This seqeuence resembles a quadratic function with a range from
+// 0 to 254. Used during display_time() for LEDs effects.
+static const uint8_t led_pwm[] PROGMEM = {
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,2,2,2,2,2,3,3,3,3,4,4,4,5,5,
+	5,5,6,6,6,7,7,7,8,8,9,9,9,10,10,11,11,11,12,12,13,13,14,14,15,15,16,16,17,
+	17,18,18,19,20,20,21,21,22,23,23,24,24,25,26,26,27,28,28,29,30,31,31,32,33,
+	33,34,35,36,36,37,38,39,40,40,41,42,43,44,45,46,46,47,48,49,50,51,52,53,54,
+	55,56,57,58,58,59,60,61,62,64,65,66,67,68,69,70,71,72,73,74,75,76,78,79,80,
+	81,82,83,84,86,87,88,89,90,92,93,94,95,97,98,99,100,102,103,104,106,107,
+	108,110,111,112,114,115,117,118,119,121,122,124,125,126,128,129,131,132,
+	134,135,137,138,140,141,143,144,146,147,149,151,152,154,155,157,158,160,
+	162,163,165,167,168,170,172,173,175,177,178,180,182,184,185,187,189,191,
+	192,194,196,198,200,201,203,205,207,209,211,212,214,216,218,220,222,224,
+	226,228,230,232,234,235,237,239,241,243,245,247,249,251,254
+};
+
 
 /******************************************************************************
 ******************* F U N C T I O N   D E F I N I T I O N S *******************
@@ -115,11 +92,12 @@ static const uint8_t led_0_26[] PROGMEM = {
 *   action.
 */
 
-// prototype functions with local scope
 static void increment_time(uint8_t what);
 static void change_hour_mode(uint8_t mode);
-static uint8_t led_pwm_value(uint8_t led, uint16_t v, uint8_t day_period);
+//static uint8_t led_pwm_value(uint8_t led, uint16_t v, uint8_t day_period);
+static uint8_t led_pwm_value(uint8_t led, uint16_t v);
 
+/*===========================================================================*/
 /*
 * MAIN DISPLAY STATE
 * - It mainly displays the time
@@ -127,8 +105,8 @@ static uint8_t led_pwm_value(uint8_t led, uint16_t v, uint8_t day_period);
 * - Coordinates LEDs colors and sequences
 * - Perform certain actions according to the state of buttons
 */
-state_t display_time(state_t state){
-
+state_t display_time(state_t state)
+{
 	static uint8_t intro = TRUE;
 	// transitions-related variables
 	static uint16_t count = 0;
@@ -149,7 +127,7 @@ state_t display_time(state_t state){
 		intro = FALSE;
 		step = 0;
 		display.set = ON;
-		leds_set(ENABLE, 0, 0, 0);
+		timer_leds_set(ENABLE, 0, 0, 0);
 		count = 0;
 		p = 0;
 		q = 0;
@@ -175,54 +153,54 @@ state_t display_time(state_t state){
 		if(display_mode != DISP_MODE_7){
 			// LEDs breathing sequence has a period of 4 seconds: 2 seconds
 			// increasing intensity and 2 seconds decreasing intensity. leds_count
-			// may range from 0 to 2000, but the range is limited from 5 to 1995
+			// may range from 0 to 1999, but the range is limited from 5 to 1995
 			// to account for possible delays in other routines (other routines 
 			// may take more than a millisecond to execute)
 			if(leds_mode == LEDS_BREATHE){
 				if(leds_cnt_up){
-					if(leds_count < 1995) leds_count++;
-					else leds_count = 1995;
+					if(leds_count < 1999) leds_count++;
+					else leds_count = 1999;
 				} else {
-					if(leds_count > 5) leds_count--;
-					else leds_count = 5;
+					if(leds_count > 0) leds_count--;
+					else leds_count = 0;
 				}
 				
 				// sync leds_count with the general counter (T = 1ms)
 				if(time.update){
 					time.update = FALSE;
-					if((leds_cnt_up) && (leds_count > 1000) && (time.sec%2)){
+					if((leds_cnt_up) && (leds_count > 1000) && (time.sec % 2)){
 						leds_cnt_up = FALSE;
-						leds_count = 1975;
-					} else if((!leds_cnt_up) && (leds_count < 1000) && (time.sec%2)){
+						leds_count = 1999;
+					} else if((!leds_cnt_up) && (leds_count < 1000) && (time.sec % 2)){
 						leds_cnt_up = TRUE;
-						leds_count = 25;
+						leds_count = 0;
 					}
 				}
 
 				// LEDs update value every 5ms, not every ms (LEDs value does not change every ms)
 				if(!(leds_count % 5)){
 					uint8_t led_r = 0, led_g = 0, led_b = 0;
-					led_r = led_pwm_value(LED_RED, leds_count, time.day_period);
-					led_g = led_pwm_value(LED_GREEN, leds_count, time.day_period);
-					led_b = led_pwm_value(LED_BLUE, leds_count, time.day_period);
-					leds_set(ENABLE, led_r, led_g, led_b);
+					led_r = led_pwm_value(LED_RED, leds_count);
+					led_g = led_pwm_value(LED_GREEN, leds_count);
+					led_b = led_pwm_value(LED_BLUE, leds_count);
+					timer_leds_set(ENABLE, led_r, led_g, led_b);
 				}
 			} else if(leds_mode == LEDS_STEADY){
 				if(time.day_period == PERIOD_AM) 
-					leds_set(ENABLE, 50, 30, 0);
+					timer_leds_set(ENABLE, 50, 30, 0);
 				else if(time.day_period == PERIOD_PM)
-					leds_set(ENABLE, 20, 20, 65);
+					timer_leds_set(ENABLE, 20, 20, 65);
 			} else if(leds_mode == LEDS_OFF){
-				leds_set(DISABLE, 0, 0, 0);
+				timer_leds_set(DISABLE, 0, 0, 0);
 			}
 		} else {
 			if(alarm.day_period == PERIOD_AM) 
-				leds_set(ENABLE, 0, 150, 0);
+				timer_leds_set(ENABLE, 0, 150, 0);
 			else if(alarm.day_period == PERIOD_PM) 
-				leds_set(ENABLE, 0, 0, 150);
+				timer_leds_set(ENABLE, 0, 0, 150);
 		}	
 	} else {
-		leds_set(DISABLE, 0, 0, 0);
+		timer_leds_set(DISABLE, 0, 0, 0);
 	}
 	
 	/* 
@@ -792,14 +770,15 @@ state_t display_time(state_t state){
 	return state;
 }
 
+/*===========================================================================*/
 /*
 * TIME SETTING STATE
 * - User performs hours and minutes adjustments using Z button
 * - Toggles selection between hours and minutes using Y button
 * - Fixed LEDs color.
 */
-state_t set_time(state_t state){
-
+state_t set_time(state_t state)
+{
 	static uint8_t intro = TRUE;
 	static uint16_t count = 0;
 	static uint8_t toggle = 0;
@@ -812,8 +791,8 @@ state_t set_time(state_t state){
 		display_mode = DISP_MODE_0;
 		count = 0;
 		selection = 1;
-		if(time.day_period == PERIOD_AM) leds_set(ENABLE, 50, 30, 0);
-		else if(time.day_period == PERIOD_PM) leds_set(ENABLE, 20, 20, 65);
+		if(time.day_period == PERIOD_AM) timer_leds_set(ENABLE, 50, 30, 0);
+		else if(time.day_period == PERIOD_PM) timer_leds_set(ENABLE, 20, 20, 65);
 	}
 
 	/*
@@ -958,13 +937,14 @@ state_t set_time(state_t state){
 	return state;
 }
 
+/*===========================================================================*/
 /*
 * HOUR MODE SETTING STATE
 * - User chooses between 12h or 24h mode
 * - Fixed LEDs color.
 */
-state_t set_hour_mode(state_t state){
-
+state_t set_hour_mode(state_t state)
+{
 	static uint8_t intro = TRUE;
 	static uint16_t count = 0;
 	static uint8_t toggle = 0;
@@ -974,7 +954,7 @@ state_t set_hour_mode(state_t state){
 		count = 0;
 		display.d1 = BLANK;
 		display.d2 = BLANK;
-		leds_set(ENABLE, 10, 10, 100);
+		timer_leds_set(ENABLE, 10, 10, 100);
 	}
 
 	/*
@@ -1041,12 +1021,14 @@ state_t set_hour_mode(state_t state){
 -------------------------- L O C A L   F U N C T I O N S ----------------------
 -----------------------------------------------------------------------------*/
 
-static void increment_time(uint8_t what){
+/*===========================================================================*/
 /*
 * Increment the stated quantity, taking into account the boundary values:
 * 	Hours: 12h or 24h mode? AM or PM?
 *   Minutes: minute 59?
 */
+static void increment_time(uint8_t what)
+{
 	if(what == INC_HOUR){
 		if(time.hour_mode == MODE_12H){
 			if(time.hour == 11){
@@ -1078,16 +1060,18 @@ static void increment_time(uint8_t what){
 	}
 
 	// LEDs update
-	if(time.day_period == PERIOD_AM) leds_set(ENABLE, 50, 30, 0);
-	else if(time.day_period == PERIOD_PM) leds_set(ENABLE, 20, 20, 65);
+	if(time.day_period == PERIOD_AM) timer_leds_set(ENABLE, 50, 30, 0);
+	else if(time.day_period == PERIOD_PM) timer_leds_set(ENABLE, 20, 20, 65);
 }
 
-static void change_hour_mode(uint8_t mode){
+/*===========================================================================*/
 /*
 * Changes Hour Mode
 * In changing the hour mode, the time hour value and alarm hour value must also
 * be evaluated and updated.
 */
+static void change_hour_mode(uint8_t mode)
+{
 	// change Time and Alarm hour mode accordingly
 	if(mode == MODE_12H){
 		time.hour_mode = MODE_12H;
@@ -1110,35 +1094,37 @@ static void change_hour_mode(uint8_t mode){
 	}
 }
 
-static uint8_t led_pwm_value(uint8_t led, uint16_t v, uint8_t day_period){
+/*===========================================================================*/
 /*
-* Used for breathing effect. It returns a PWM value from a vector stored in ROM
+* Used for breathing effect. Returns a PWM value from a vector stored in FLASH
 * That vector is computed as a quadratic function. The quadratic function was 
-* chosen so that v = 5 gives a value of PWM = 1, and v = 1995 gives a value of 
-* PWM = 250 (provided a scale factor of 1). Different vectors have been 
-* computed for different scaled quadratic functions.
+* chosen so that v = 0 gives a value of PWM = 1, and v = 1999 gives a value of 
+* PWM = 250 (provided a scale factor of 1). Different scale factors are 
+* provided for different color intensities.
 * This function was previously implemented using floating-point operations, but
 * it was very time-consuming, so this strategy (query a stored value) is much
 * faster.
 */
+static uint8_t led_pwm_value(uint8_t led, uint16_t v)
+{
 	uint8_t x = (uint8_t)(v / 8);
-	uint8_t pwm = 0;
+	uint8_t pwm = pgm_read_byte(&led_pwm[x]);
+	float scale;
+	uint8_t out;
 
-	switch(led){
-
-		case LED_RED:
-			if(day_period == PERIOD_AM) pwm = pgm_read_byte(&led_0_2[x]);
-			else pwm = pgm_read_byte(&led_0_08[x]);
-			break;
-		case LED_GREEN:
-			if(day_period == PERIOD_AM) pwm = pgm_read_byte(&led_0_12[x]);
-			else pwm = pgm_read_byte(&led_0_08[x]);
-			break;
-		case LED_BLUE:
-			if(day_period == PERIOD_AM) pwm = 0;
-			else pwm = pgm_read_byte(&led_0_26[x]);
-			break;
+	if (led == LED_RED) {
+		if (time.day_period == PERIOD_AM) scale = 0.2;
+		else scale = 0.08;
+	} else if (led == LED_GREEN) {
+		if (time.day_period == PERIOD_AM) scale = 0.12;
+		else scale = 0.08;
+	} else if (led == LED_BLUE) {
+		if (time.day_period == PERIOD_AM) scale = 0.0;
+		else scale = 0.26;
 	}
 
-	return pwm;
+	out = (uint8_t)(scale * (float)pwm);
+	out += 1;
+	
+	return out;
 }

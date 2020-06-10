@@ -35,15 +35,15 @@
 ******************* F U N C T I O N   D E F I N I T I O N S *******************
 ******************************************************************************/
 
-// prototype functions with local scope
 static void ports_init(void);
 static void system_defaults(void);
 
-void boot(void){
-
-	/* 
-	* Initialize pin ports and default values of variables
-	*/
+/*===========================================================================*/
+/* 
+* Initialize pin ports and default values of variables
+*/
+void boot(void)
+{
 	ports_init();
     system_defaults();
     rom_init();
@@ -60,9 +60,9 @@ void boot(void){
     * - external interrupts (pin changes)
     * RTC is NOT initialized!!!
     */
-    leds_init();        // timers
-    base_timer_init();  // timer
-    buzzer_init();      // timer
+    timer_leds_init();        // timers
+    timer_base_init();  // timer
+    timer_buzzer_init();      // timer
     adc_init();
     uart_init();
     pin_change_isr_init();
@@ -72,8 +72,9 @@ void boot(void){
 -------------------------- L O C A L   F U N C T I O N S ----------------------
 -----------------------------------------------------------------------------*/
 
-static void ports_init(void){
-
+/*===========================================================================*/
+static void ports_init(void)
+{
 	// ADC inputs
 	DDRA &= ~(1<<DDA0);		// V_HV
 	DDRA &= ~(1<<DDA1);		// V_CTL_REG
@@ -159,8 +160,9 @@ static void ports_init(void){
 	PORTB &= ~(1<<PORTB1);
 }
 
-static void system_defaults(void){
-
+/*===========================================================================*/
+static void system_defaults(void)
+{
 	/* Structures initial values */
 	// STRUCTURE - time:
 	time.sec = 0;
@@ -210,6 +212,7 @@ static void system_defaults(void){
 	btnX.delay1 = FALSE;
 	btnX.delay2 = FALSE;
 	btnX.delay3 = FALSE;
+	btnX.check = btn_check_x;
 	// STRUCTURE - btnY
 	btnY.query = FALSE;
 	btnY.action = FALSE;
@@ -219,6 +222,7 @@ static void system_defaults(void){
 	btnY.delay1 = FALSE;
 	btnY.delay2 = FALSE;
 	btnY.delay3 = FALSE;
+	btnY.check = btn_check_y;
 	// STRUCTURE - btnZ
 	btnZ.query = FALSE;
 	btnZ.action = FALSE;
@@ -228,4 +232,5 @@ static void system_defaults(void){
 	btnZ.delay1 = FALSE;
 	btnZ.delay2 = FALSE;
 	btnZ.delay3 = FALSE;
+	btnZ.check = btn_check_z;
 }

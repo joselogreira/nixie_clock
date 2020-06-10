@@ -25,11 +25,11 @@ OBJ  := $(SRC:.c=.o)
 AVRDUDE 			= avrdude
 AVRDUDE_PORT	   	= usb
 AVRDUDE_PROGRAMMER 	= avrisp2
-
-MCU 		= atmega324pb
 ifeq ($(AVRDUDE_PROGRAMMER),avrisp2)
 	AVRDUDE_FREQ = -B2.0
 endif
+
+MCU 		= atmega324pb
 
 # AVRDude
 AVRDUDE_FLAGS = -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER) -v $(AVRDUDE_FREQ) -F

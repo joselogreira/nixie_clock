@@ -23,7 +23,6 @@
 ******************************************************************************/
 
 #include "eeprom.h"
-#include "config.h"
 
 #include <avr/eeprom.h>
 
@@ -43,11 +42,13 @@ uint8_t EEMEM test_leds[4];
 ******************* F U N C T I O N   D E F I N I T I O N S *******************
 ******************************************************************************/
 
-void rom_init(void){
+/*===========================================================================*/
 /*
 * Initial, unprogrammed content of ROM is all bytes 0xFF. Thus, it must be
 * initialized with some default values
 */
+void rom_init(void)
+{
 	uint8_t val = eeprom_read_byte(&sys_blank);
 
 	if(val != 0xAA){
@@ -71,8 +72,9 @@ void rom_init(void){
 	} 
 }
 
-uint8_t rom_increase_test_cnt(void){
-
+/*===========================================================================*/
+uint8_t rom_increase_test_cnt(void)
+{
 	uint8_t val = eeprom_read_byte(&test_cnt);
 	val++;
 	eeprom_update_byte(&test_cnt, val);
@@ -80,12 +82,13 @@ uint8_t rom_increase_test_cnt(void){
 	return val;
 }
 
-uint8_t rom_query_test_cnt(void){
-
+/*===========================================================================*/
+uint8_t rom_query_test_cnt(void)
+{
 	return eeprom_read_byte(&test_cnt);
 }
 
-void rom_store_voltages_results(uint8_t *t1, uint8_t *t2, uint8_t *t3){
+/*===========================================================================*/
 /*
 * It receives all test results in 3 different vectors. Each vector contains
 * 2 sets of tests: the first one was obtained when the boost was off, and 
@@ -102,6 +105,8 @@ void rom_store_voltages_results(uint8_t *t1, uint8_t *t2, uint8_t *t3){
 * 	7. Input voltage to the circuit
 * 	8. MCU voltage rail
 */
+void rom_store_voltages_results(uint8_t *t1, uint8_t *t2, uint8_t *t3)
+{
 	for(uint8_t i = 0; i < 8; i++){
 		if(*(t1 + i) == TRUE) eeprom_update_byte((test_voltages + i), PASS);
 		else eeprom_update_byte((test_voltages + i), FAIL);		
@@ -116,49 +121,57 @@ void rom_store_voltages_results(uint8_t *t1, uint8_t *t2, uint8_t *t3){
 	}
 }
 
-void rom_store_timing_results(uint8_t clock_ok, uint16_t *times){
-
+/*===========================================================================*/
+void rom_store_timing_results(uint8_t clock_ok, uint16_t *times)
+{
 	if(clock_ok) eeprom_update_byte(test_rtc, PASS);
 	else eeprom_update_byte(test_rtc, FAIL);
 
 	eeprom_update_block((const void *)times, (void *)(test_rtc + 1), sizeof(test_rtc) - 1);
 }
 
-void rom_store_buzzer_results(uint8_t buzzer_ok){
-
+/*===========================================================================*/
+void rom_store_buzzer_results(uint8_t buzzer_ok)
+{
 	if(buzzer_ok) eeprom_update_byte(&test_buzzer, PASS);
 	else  eeprom_update_byte(&test_buzzer, FAIL);
 }
 
-void rom_store_leds_results(uint8_t *leds_ok){
-
+/*===========================================================================*/
+void rom_store_leds_results(uint8_t *leds_ok)
+{
 	for(uint8_t i = 0; i < 4; i++){
 		if(*(leds_ok + i) == TRUE) eeprom_update_byte((test_leds + i), PASS);
 		else eeprom_update_byte((test_leds + i), FAIL);		
 	}
 }
 
-void rom_query_voltages_test(uint8_t *v){
-
+/*===========================================================================*/
+void rom_query_voltages_test(uint8_t *v)
+{
 	eeprom_read_block((void *)v, test_voltages, sizeof(test_voltages));
 }
 
-uint8_t rom_query_rtc_ok_test(void){
-
+/*===========================================================================*/
+uint8_t rom_query_rtc_ok_test(void)
+{
 	return eeprom_read_byte(test_rtc);
 }
 
-void rom_query_rtc_time_test(uint16_t *t){
-
+/*===========================================================================*/
+void rom_query_rtc_time_test(uint16_t *t)
+{
 	eeprom_read_block((void *)t, test_rtc + 1, sizeof(test_rtc) - 1);
 }
 
-uint8_t rom_query_buzzer_ok_test(void){
-
+/*===========================================================================*/
+uint8_t rom_query_buzzer_ok_test(void)
+{
 	return eeprom_read_byte(&test_buzzer);
 }
 
-void rom_query_leds_test(uint8_t *l){
-
+/*===========================================================================*/
+void rom_query_leds_test(uint8_t *l)
+{
 	eeprom_read_block((void *)l, test_leds, sizeof(test_leds));
 }

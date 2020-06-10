@@ -20,8 +20,6 @@
 ******************************************************************************/
 
 #include "timers.h"
-#include "buzzer.h"
-#include "config.h"
 
 #include <avr/io.h>
 #include <stdint.h>
@@ -31,10 +29,13 @@
 ******************* F U N C T I O N   D E F I N I T I O N S *******************
 ******************************************************************************/
 
-void rtc_set(uint8_t state){
-	// TIMER COUNTER 2
-	// Asynchronous operation using external 32.767KHz crystal
-	// Normal mode for TC2
+/*===========================================================================*/
+/*
+* TIMER COUNTER 2
+* Asynchronous operation using external 32.767KHz crystal
+* Normal mode for TC2
+*/
+void timer_rtc_set(uint8_t state){
 
 	// disable interrupts if enabled
 	TIMSK2 &= ~((1<<OCIE2B) | (1<<OCIE2A) | (1<<TOIE2));
@@ -63,9 +64,12 @@ void rtc_set(uint8_t state){
 	}
 }
 
-
-void base_timer_init(void){
-	// TIMER COUNTER 3
+/*===========================================================================*/
+/*
+* TIMER COUNTER 3
+*/
+void timer_base_init(void)
+{
 	TCCR3B |= (1<<WGM32);	// CTC mode, TOP: OCR3A
 	TCNT3 = 0;
 	OCR3A = 250;			// 250 -> isr freq = 2MHz/8/250 = 1KHz
@@ -74,18 +78,26 @@ void base_timer_init(void){
 	//TCCR3B |= (1<<CS31); 	// Prescaler 8. Start TC3
 }
 
-void buzzer_init(void){
-	//TIMER COUNTER 4
+/*===========================================================================*/
+/*
+* TIMER COUNTER 4
+*/
+void timer_buzzer_init(void)
+{
 	TCCR4B |= (1<<WGM42);	// CTC mode, TOP: OCR4A
 	TCCR4A |= (1<<COM4A0);	// toggle pin OC4A on compare match
 	TCNT4 = 0;
 	// no interrupts used
-	OCR4A = N_B7;
+	OCR4A = 0xFFFF;
 	//TCCR4B |= (1<<CS40);	// Prescaler 1; Start TC4
 }
 
-void leds_init(void){
-	// TIMER COUNTER 0 (OC0A & OC0B)
+/*===========================================================================*/
+/*
+* TIMER COUNTER 0 (OC0A & OC0B)
+*/
+void timer_leds_init(void)
+{
 	TCCR0A |= (1<<WGM01) | (1<<WGM00);		// Fast PWM; TOP: 0xFF
 	TCCR0A |= (1<<COM0A1) | (1<<COM0B1);	// Non-inverting mode
 	// no interrupts used
@@ -104,8 +116,9 @@ void leds_init(void){
 	//TCCR1B |= (1<<CS10);		// Prescaler 1; start TC1
 }
 
-void base_timer_set(uint8_t state){
-
+/*===========================================================================*/
+void timer_base_set(uint8_t state)
+{
 	if(state){
 		TIMSK3 |= (1<<OCIE3A);	// Interrupts for compare match
 		TCNT3 = 0;
@@ -116,8 +129,9 @@ void base_timer_set(uint8_t state){
 	}
 }
 
-void buzzer_set(uint8_t state, uint16_t note){
-
+/*===========================================================================*/
+void timer_buzzer_set(uint8_t state, uint16_t note)
+{
 	if(state){
 		TCNT4 = 0;
 		OCR4A = note;
@@ -129,8 +143,9 @@ void buzzer_set(uint8_t state, uint16_t note){
 	}
 }
 
-void leds_set(uint8_t state, uint8_t r, uint8_t g, uint8_t b){
-
+/*===========================================================================*/
+void timer_leds_set(uint8_t state, uint8_t r, uint8_t g, uint8_t b)
+{
 	if(state){
 		if((B_LED != b) || (R_LED != r) || (G_LED != g)){
 			R_LED = r;

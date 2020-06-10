@@ -22,13 +22,6 @@
 ******************************************************************************/
 
 #include "sleep.h"
-#include "adc.h"
-#include "buzzer.h"
-#include "config.h"
-#include "external_interrupt.h"
-#include "timers.h"
-#include "uart.h"
-#include "util.h"
 
 #include <stdint.h>
 #include <avr/sleep.h>		/* Macros for handling spleep routines */
@@ -51,9 +44,9 @@ enum {
 ******************* F U N C T I O N   D E F I N I T I O N S *******************
 ******************************************************************************/
 
-// prototype functions with local scope
 static void ports_power_save(uint8_t state);
 
+/*===========================================================================*/
 /* 	
 * When this function is entered, MCU execution is kept within this function 
 * until 12V adapter is connected (EXT_PWR is true).
@@ -63,8 +56,8 @@ static void ports_power_save(uint8_t state);
 * The steps to sleep and wake up are implemented within a switch() statement to
 * be able to jump back when needed
 */
-state_t go_to_sleep(state_t state, uint8_t mode){
-
+state_t go_to_sleep(state_t state, uint8_t mode)
+{
 	uint8_t step = DISABLE_PERIPHERALS;
 	uint8_t sys = FALSE;
 
@@ -141,55 +134,57 @@ state_t go_to_sleep(state_t state, uint8_t mode){
 	return state;
 }
 
-void peripherals_disable(void){
-
-	/*
-	* When going to sleep: All peripherals should be disabled to
-	* save the most power possible. The following peripherals are
-	* disabled:
-	* - ADC
-	* - USART
-	* - Timers
-	* - Buttons' external interrupt (External power ISR is still active)
-	* - RTC only if entering PWR_DOWN sleep mode. Otherwise, keep running
-	*
-	* * Boost is not explicitly disabled since the absence of power adapter
-	* 	immediately disables the boost controller. What must be done is to
-	*	disable the HIGH level of BOOST_EN pin, since it includes a pull 
-	*	down resistor that consumes power
-	* * Buttons' pull-ups also disabled to avoid power consumption when
-	*   pressed
-	*/
+/*===========================================================================*/
+/*
+* When going to sleep: All peripherals should be disabled to
+* save the most power possible. The following peripherals are
+* disabled:
+* - ADC
+* - USART
+* - Timers
+* - Buttons' external interrupt (External power ISR is still active)
+* - RTC only if entering PWR_DOWN sleep mode. Otherwise, keep running
+*
+* * Boost is not explicitly disabled since the absence of power adapter
+* 	immediately disables the boost controller. What must be done is to
+*	disable the HIGH level of BOOST_EN pin, since it includes a pull 
+*	down resistor that consumes power
+* * Buttons' pull-ups also disabled to avoid power consumption when
+*   pressed
+*/
+void peripherals_disable(void)
+{
 	adc_set(DISABLE);
 	uart_set(DISABLE);
-	buzzer_set(DISABLE, N_C8);
-	leds_set(DISABLE, 0, 0, 0);
-	base_timer_set(DISABLE);
+	buzzer_set(DISABLE);
+	timer_leds_set(DISABLE, 0, 0, 0);
+	timer_base_set(DISABLE);
 	buttons_set(DISABLE);
 	// Disable RTC only if entering POWER DOWN
 	if(sleep_mode == RTC_DISABLE)
-		rtc_set(DISABLE);
+		timer_rtc_set(DISABLE);
 	ports_power_save(DISABLE);
 }
 
-void peripherals_enable(void){
-
-	/*
-	* When waking up: All peripherals should be enabled to use them when
-	* power adapter is available. The following peripherals are enabled:
-	* - ADC
-	* - USART
-	* - Timers
-	* - Buttons' external interrupt (External power ISR is still active)
-	* - RTC always enabled when waking up
-	* * Buttons' pull-ups also enabled
-	*/
+/*===========================================================================*/
+/*
+* When waking up: All peripherals should be enabled to use them when
+* power adapter is available. The following peripherals are enabled:
+* - ADC
+* - USART
+* - Timers
+* - Buttons' external interrupt (External power ISR is still active)
+* - RTC always enabled when waking up
+* * Buttons' pull-ups also enabled
+*/
+void peripherals_enable(void)
+{
 	ports_power_save(ENABLE);
 	adc_set(ENABLE);
 	uart_set(ENABLE);
-	base_timer_set(ENABLE);
+	timer_base_set(ENABLE);
 	buttons_set(ENABLE);
-	rtc_set(ENABLE);	// Always enable RTC
+	timer_rtc_set(ENABLE);	// Always enable RTC
 	BOOST_SET(ENABLE);
 	// missing I2C
 }
@@ -198,8 +193,9 @@ void peripherals_enable(void){
 -------------------------- L O C A L   F U N C T I O N S ----------------------
 -----------------------------------------------------------------------------*/
 
-static void ports_power_save(uint8_t state){
-
+/*===========================================================================*/
+static void ports_power_save(uint8_t state)
+{
 	if(state){
 		// Set BOOST_EN pin HIGH (Boost disabled)
 		PORTB |= (1<<PORTB0);

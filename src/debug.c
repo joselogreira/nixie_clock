@@ -22,14 +22,6 @@
 ******************************************************************************/
 
 #include "debug.h"
-#include "adc.h"
-#include "buzzer.h"
-#include "config.h"
-#include "eeprom.h"
-#include "external_interrupt.h"
-#include "timers.h"
-#include "uart.h"
-#include "util.h"
 
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
@@ -43,7 +35,7 @@
 
 static void print_rom_report(void);
 
-state_t usr_test(state_t state){
+/*===========================================================================*/
 /*
 * This test sequence is User-accessible, meaning that it can be easily accessed
 * by holding the X button pressed at the end of the "Intro" animation. Here,
@@ -54,7 +46,8 @@ state_t usr_test(state_t state){
 * - All RGB LED colors are working
 * - The buzzer sounds properly
 */
-
+state_t usr_test(state_t state)
+{
 	static uint8_t intro = TRUE;
 	static uint16_t count = 0;
 	static uint8_t n = 0;
@@ -114,7 +107,7 @@ state_t usr_test(state_t state){
 			led_g = 0;
 			led_b = (uint8_t)(leds_count>>4);;
 		}
-		leds_set(ENABLE, led_r, led_g, led_b);
+		timer_leds_set(ENABLE, led_r, led_g, led_b);
 	}
 
 	/*
@@ -153,7 +146,7 @@ state_t usr_test(state_t state){
 	return state;
 }
 
-state_t production_test(state_t state){
+/*===========================================================================*/
 /*
 * This is a SEQUENTIAL (or BLOCKING) function, meaning that it does not run 
 * every 1ms (as the other functions in the main loop), but rather it executes
@@ -171,6 +164,8 @@ state_t production_test(state_t state){
 * The MCU reports each step using the serial interface, and stores the results
 * in ROM. This report can then be printed out later to further debug the system
 */
+state_t production_test(state_t state)
+{
  	uint16_t cnt = 0, x = 0;	// auxiliary counters
 	uint8_t clock_ok = TRUE;	// flags to control the test execution flow
 	uint8_t buzzer_ok = TRUE;	// flags to control the test execution flow
@@ -403,19 +398,19 @@ state_t production_test(state_t state){
 	while(x < 4){
 		switch(x){
 			case 0:
-				leds_set(ENABLE, 255, 0, 0);
+				timer_leds_set(ENABLE, 255, 0, 0);
 				uart_send_string_p(PSTR("\n\r > RED."));
 				break;
 			case 1:
-				leds_set(ENABLE, 0, 255, 0);
+				timer_leds_set(ENABLE, 0, 255, 0);
 				uart_send_string_p(PSTR("\n\r > GREEN."));
 				break;
 			case 2:
-				leds_set(ENABLE, 0, 0, 255);
+				timer_leds_set(ENABLE, 0, 0, 255);
 				uart_send_string_p(PSTR("\n\r > BLUE."));
 				break;
 			case 3: 
-				leds_set(ENABLE, 255, 255, 255);
+				timer_leds_set(ENABLE, 255, 255, 255);
 				uart_send_string_p(PSTR("\n\r > WHITE."));
 				break;
 		}
@@ -423,7 +418,7 @@ state_t production_test(state_t state){
 		uart_send_string_p(PSTR(" Looks good? y/n\n\r"));
 		c = uart_read_char();
 		uart_send_char(c);		// echo
-		leds_set(DISABLE, 0, 0, 0);
+		timer_leds_set(DISABLE, 0, 0, 0);
 		// If operator responds YES, switch to the next color or go to the next
 		// step if it was the last color.
 		if((c == 'y') || (c == 'Y')){
@@ -487,8 +482,9 @@ state_t production_test(state_t state){
 	return state;
 }
 
-static void print_rom_report(void){
-
+/*===========================================================================*/
+static void print_rom_report(void)
+{
 	uint8_t x;
 
 	// Print No of tests performed 'til now

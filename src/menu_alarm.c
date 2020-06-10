@@ -22,11 +22,6 @@
 ******************************************************************************/
 
 #include "menu_alarm.h"
-#include "buzzer.h"
-#include "config.h"
-#include "timers.h"
-#include "uart.h"
-#include "util.h"
 
 #include <stdint.h>
 
@@ -46,18 +41,18 @@ typedef struct {
 ******************* F U N C T I O N   D E F I N I T I O N S *******************
 ******************************************************************************/
 
-// prototype functions with local scope
 static void increment_alarm(uint8_t what);
 static void change_theme(uint8_t dir);
 static void init_snooze_time(snooze_s *p1, snooze_s *p2);
 static uint8_t check_snooze_time(snooze_s *p);
 
+/*===========================================================================*/
 /*
 * ALARM ENABLED
 * User configures wether the alarm is enabled or disabled
 */
-state_t set_alarm_active(state_t state){
-
+state_t set_alarm_active(state_t state)
+{
 	static uint8_t intro = TRUE;
 	static uint16_t count = 0;
 	static uint8_t toggle = 0;
@@ -73,7 +68,7 @@ state_t set_alarm_active(state_t state){
 		display.d2 = BLANK;
 		display.d3 = BLANK;
 		count = 0;
-		leds_set(ENABLE, 0, 50, 50);
+		timer_leds_set(ENABLE, 0, 50, 50);
 	}
 
 	/*
@@ -125,12 +120,13 @@ state_t set_alarm_active(state_t state){
 	return state;
 }
 
+/*===========================================================================*/
 /*
 * SET ALARM TIME
 * User configures the time the alarm is to be triggered
 */
-state_t set_alarm(state_t state){
-
+state_t set_alarm(state_t state)
+{
 	static uint8_t intro = TRUE;
 	static uint16_t count = 0;
 	static uint8_t toggle = 0;
@@ -147,8 +143,8 @@ state_t set_alarm(state_t state){
 		display.fade_level[3] = 5;
 		count = 0;
 		selection = 1;
-		if(alarm.day_period == PERIOD_AM) leds_set(ENABLE, 0, 150, 0);
-		else if(alarm.day_period == PERIOD_PM) leds_set(ENABLE, 0, 0, 150);
+		if(alarm.day_period == PERIOD_AM) timer_leds_set(ENABLE, 0, 150, 0);
+		else if(alarm.day_period == PERIOD_PM) timer_leds_set(ENABLE, 0, 0, 150);
 	}
 
 	/*
@@ -262,6 +258,7 @@ state_t set_alarm(state_t state){
 	return state;
 }
 
+/*===========================================================================*/
 /*
 * ALARM TRIGGERED
 * When alarm is enabled and triggered, the clock automatically enters this
@@ -270,8 +267,8 @@ state_t set_alarm(state_t state){
 * and 10 mins ahead of the current alarm. The behavior of the snooze time
 * and buttons is handled within the switch() statement
 */
-state_t alarm_triggered(state_t state){
-
+state_t alarm_triggered(state_t state)
+{
 	static uint8_t intro = TRUE;
 	static uint16_t count = 0;
 	static uint16_t count2 = 0;
@@ -303,8 +300,8 @@ state_t alarm_triggered(state_t state){
 	*/
 	if(!(count % 300)){
 		leds_toggle ^= 1;
-		if(leds_toggle) leds_set(ENABLE, 250, 10, 0);
-		else leds_set(ENABLE, 10, 250, 0);
+		if(leds_toggle) timer_leds_set(ENABLE, 250, 10, 0);
+		else timer_leds_set(ENABLE, 10, 250, 0);
 	}
 
 	/*
@@ -404,13 +401,14 @@ state_t alarm_triggered(state_t state){
 	return state;
 }
 
+/*===========================================================================*/
 /*
 * ALARM MUSIC
 * User can choose from among 6 different pre-loaded tones to choose
 * as the alarm music
 */
-state_t set_alarm_theme(state_t state){
-
+state_t set_alarm_theme(state_t state)
+{
 	static uint8_t intro = TRUE;
 	static uint16_t count = 0;
 	static uint8_t toggle = 0;
@@ -426,7 +424,7 @@ state_t set_alarm_theme(state_t state){
 		display.d2 = BLANK;
 		display.d3 = BLANK;
 		count = 0;
-		leds_set(ENABLE, 50, 50, 50);
+		timer_leds_set(ENABLE, 50, 50, 50);
 	}
 
 	/*
@@ -496,13 +494,13 @@ state_t set_alarm_theme(state_t state){
 	return state;
 }
 
-
 /*-----------------------------------------------------------------------------
 -------------------------- L O C A L   F U N C T I O N S ----------------------
 -----------------------------------------------------------------------------*/
 
-static void increment_alarm(uint8_t what){
-
+/*===========================================================================*/
+static void increment_alarm(uint8_t what)
+{
 	if(what == INC_HOUR){
 		if(alarm.hour_mode == MODE_12H){
 			if(alarm.hour == 11){
@@ -534,12 +532,13 @@ static void increment_alarm(uint8_t what){
 	}
 
 	// LEDs update
-	if(alarm.day_period == PERIOD_AM) leds_set(ENABLE, 0, 150, 0);
-	else if(alarm.day_period == PERIOD_PM) leds_set(ENABLE, 0, 0, 150);
+	if(alarm.day_period == PERIOD_AM) timer_leds_set(ENABLE, 0, 150, 0);
+	else if(alarm.day_period == PERIOD_PM) timer_leds_set(ENABLE, 0, 0, 150);
 }
 
-static void change_theme(uint8_t dir){
-
+/*===========================================================================*/
+static void change_theme(uint8_t dir)
+{
 	if(dir){
 		if(alarm.theme == SIMPLE_ALARM) alarm.theme = MAJOR_SCALE;
 		else if(alarm.theme == MAJOR_SCALE) alarm.theme = STAR_WARS;
@@ -561,8 +560,9 @@ static void change_theme(uint8_t dir){
 	buzzer_music(alarm.theme, DISABLE);
 }
 
-static void init_snooze_time(snooze_s *p1, snooze_s *p2){
-
+/*===========================================================================*/
+static void init_snooze_time(snooze_s *p1, snooze_s *p2)
+{
 	// Snooze Alarm 1: SNOOZE_TIME minutes ahead of the current alarm
 	(*p1).sec = 0;
 	(*p1).min = alarm.min + SNOOZE_TIME;
@@ -596,8 +596,9 @@ static void init_snooze_time(snooze_s *p1, snooze_s *p2){
 	}
 }
 
-static uint8_t check_snooze_time(snooze_s *p){
-
+/*===========================================================================*/
+static uint8_t check_snooze_time(snooze_s *p)
+{
 	uint8_t match = FALSE;
 
 	if((*p).hour == time.hour){

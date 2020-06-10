@@ -20,12 +20,26 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+/******************************************************************************
+*******************	I N C L U D E   D E P E N D E N C I E S	*******************
+******************************************************************************/
+
+#include "adc.h"
+#include "buzzer.h"
 #include "config.h"
+#include "eeprom.h"
+#include "external_interrupt.h"
+#include "timers.h"
+#include "uart.h"
+#include "util.h"
 
 #include <stdint.h>
 
-state_t usr_test(state_t state);
+/******************************************************************************
+******************** F U N C T I O N   P R O T O T Y P E S ********************
+******************************************************************************/
 
+state_t usr_test(state_t state);
 state_t production_test(state_t state);
 
 #endif /* DEBUG_H */

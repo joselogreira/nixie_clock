@@ -22,9 +22,6 @@
 ******************************************************************************/
 
 #include "buzzer.h"
-#include "config.h"
-#include "timers.h"
-#include "uart.h"
 
 #include <avr/pgmspace.h>
 #include <util/delay.h>
@@ -34,10 +31,49 @@
 ******************* C O N S T A N T   D E F I N I T I O N S *******************
 ******************************************************************************/
 
+// TIMER COUNTER 3 MACROS (notes)
+// All notes are divided by 8, since the operation frequency was changed from
+// 16MHz to 2MHz
+#define N_A6		4545/8	// 1760Hz
+#define N_B6		4050/8	// 1975.53Hz
+#define N_C7		3822/8	// 2093.00Hz
+#define N_Db7		3608/8	// 2217.46Hz
+#define N_D7		3405/8	// 2349.32Hz
+#define N_E7		3034/8	// 2637.02Hz
+#define N_F7		2863/8	// 2793.83Hz
+#define N_G7		2551/8	// 3135.96Hz
+#define N_Gs7		2408/8	// 3322.44Hz
+#define N_A7		2273/8	// 3520Hz
+#define N_Bb7		2145/8	// 3729.31Hz
+#define N_B7		2025/8	// 3951.07Hz
+#define N_C8		1911/8	// 4186.01HzHz
+#define N_Cs8		N_Db8
+#define N_Db8		1804/8	// 4434.92Hz
+#define N_D8		1703/8	// 4698.63Hz
+#define N_Ds8		1607/8	// 4978.03Hz
+#define N_E8		1517/8	// 5274.04Hz
+#define N_F8		1432/8	// 5587.65Hz
+#define N_Fs8		N_Gb8
+#define N_Gb8		1351/8	// 5919.91Hz
+#define N_G8		1276/8	// 6271.93Hz
+#define N_A8		1136/8	// 7040.00Hz
+#define N_B8		1012/8	// 7902.13Hz
+#define N_C9		956/8	// 8372.02Hz
+#define N_SIL		0xFFFF	// Silence
+
+// Music notes duration (reference tempo: 100)
+#define SIXTEENTH_NOTE	(QUARTER_NOTE / 4)
+#define TWELVETH_NOTE	(QUARTER_NOTE / 3)
+#define EIGHTH_NOTE		(QUARTER_NOTE / 2)
+#define SIXTH_NOTE 		(TWELVETH_NOTE * 2)
+#define QUARTER_NOTE	(60000 / 100)
+#define HALF_NOTE		(QUARTER_NOTE * 2)
+#define WHOLE_NOTE		(QUARTER_NOTE * 4)
+
 /*
 * Melodies are stored as an array of note-duration structures. "note" field 
 * determines the musical note (the PWM frequency of the buzzer), and "duration"
-* determines for how long the note is to be played.
+* determines how long the note is to be played.
 */
 typedef struct {
 	uint16_t note;
@@ -339,20 +375,27 @@ static const note_s usa_anthem[] PROGMEM = {
 ******************* F U N C T I O N   D E F I N I T I O N S *******************
 ******************************************************************************/
 
-// prototype functions with local scope
 static uint16_t note_duration(uint16_t counts, uint8_t tempo);
 
+/*===========================================================================*/
 /*
 * Buzzer beeps for 30ms. This is a blocking function!: the function does not
 * return until the delay elapses
 */
-void buzzer_beep(void){
-
-	buzzer_set(ENABLE, N_C8);
+void buzzer_beep(void)
+{
+	timer_buzzer_set(ENABLE, N_C8);
 	_delay_ms(30);
-	buzzer_set(DISABLE, N_C8);
+	timer_buzzer_set(DISABLE, N_C8);
 }
 
+/*===========================================================================*/
+void buzzer_set(uint8_t state)
+{
+	timer_buzzer_set(state, N_C8);
+}
+
+/*===========================================================================*/
 /*
 * BUZZER MUSIC
 * This function is non-blocking, meaning that the melodies' notes aren't played
@@ -364,9 +407,8 @@ void buzzer_beep(void){
 *   note, and the counter is reset.
 * - This fuction is executed once per millisecond, thus, 1ms is the time base
 */
-uint8_t buzzer_music(uint8_t theme, uint8_t state){
-
-
+uint8_t buzzer_music(uint8_t theme, uint8_t state)
+{
 	static uint8_t intro = TRUE;
 	static uint16_t count = 0;
 	static uint8_t n = 0;
@@ -435,14 +477,14 @@ uint8_t buzzer_music(uint8_t theme, uint8_t state){
 		if(count >= count_vect[n]){
 			n++;
 			if(pgm_read_word(&p[n].note) != N_SIL)
-				buzzer_set(ENABLE, pgm_read_word(&p[n].note));
+				timer_buzzer_set(ENABLE, pgm_read_word(&p[n].note));
 			else
-				buzzer_set(DISABLE, pgm_read_word(&p[n].note));
+				timer_buzzer_set(DISABLE, pgm_read_word(&p[n].note));
 			count = 0;
 		}
 		// If melody finishes playing, output TRUE
 		if(n >= size){
-			buzzer_set(DISABLE, N_C8);
+			timer_buzzer_set(DISABLE, N_C8);
 			intro = TRUE;
 			out = TRUE;
 		}
@@ -451,7 +493,7 @@ uint8_t buzzer_music(uint8_t theme, uint8_t state){
 	} else {
 		// If "state" flag is disabled, stop playing melody and disable buzzer
 		intro = TRUE;
-		buzzer_set(DISABLE, N_SIL);	
+		timer_buzzer_set(DISABLE, N_SIL);	
 	}	
 	
 	return out;
@@ -461,10 +503,12 @@ uint8_t buzzer_music(uint8_t theme, uint8_t state){
 -------------------------- L O C A L   F U N C T I O N S ----------------------
 -----------------------------------------------------------------------------*/
 
-static uint16_t note_duration(uint16_t counts, uint8_t tempo){
+/*===========================================================================*/
 /*
 *	Base tempo is 100 (100 bits per minute). 
 */
+static uint16_t note_duration(uint16_t counts, uint8_t tempo)
+{
 
 	float f_tempo = (float) tempo;
 	float f_counts = (float) counts;

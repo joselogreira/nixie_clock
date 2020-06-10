@@ -22,11 +22,6 @@
 ******************************************************************************/
 
 #include "menu_user.h"
-#include "buzzer.h"
-#include "config.h"
-#include "timers.h"
-#include "uart.h"
-#include "util.h"
 
 #include <avr/pgmspace.h>
 #include <stdint.h>
@@ -38,23 +33,27 @@
 ******************************************************************************/
 
 // 3D Sequence of digits stored as a vector. Used for an animation
-static const uint8_t animation_3d_t1[] PROGMEM = {3,8,9,4,0,5,7,2,6,1,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
-static const uint8_t animation_3d_t2[] PROGMEM = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,1,6,2,7,5,0,4,9,8,3};
+static const uint8_t animation_3d_t1[] PROGMEM = {
+	3,8,9,4,0,5,7,2,6,1,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF
+};
+static const uint8_t animation_3d_t2[] PROGMEM = {
+	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,1,6,2,7,5,0,4,9,8,3
+};
 
 /******************************************************************************
 ******************* F U N C T I O N   D E F I N I T I O N S *******************
 ******************************************************************************/
 
-// prototype functions with local scope
 static uint8_t change_transition_mode(uint8_t dir);
 
+/*===========================================================================*/
 /*
 * INTRO presentation
 * Short animation that combines buzzer sound and the 3D effect
 * IF at the end of the animation, button X is pressed: GO TO TEST SEQUENCE
 */
-state_t intro(state_t state){
-
+state_t intro(state_t state)
+{
     static uint8_t intro = TRUE;
     static uint8_t count = 0;
     static uint8_t n = 0;
@@ -73,7 +72,7 @@ state_t intro(state_t state){
     	display.fade_level[3] = 5;
     	c = 0;
     	d = 0;
-    	leds_set(ENABLE, 250, 250, 250);
+    	timer_leds_set(ENABLE, 250, 250, 250);
     }
 
     /*
@@ -122,14 +121,15 @@ state_t intro(state_t state){
 	return state;
 }
 
+/*===========================================================================*/
 /*
 * MAIN MENU
 * From this menu, all clock configurations are performed.
 * It handles all the menu modes (configuration modes)
 * LEDs color in menu is PINK. Color inside every menu option changes
 */
-state_t display_menu(state_t state){
-
+state_t display_menu(state_t state)
+{
 	static uint8_t intro = TRUE;
 	static uint8_t menu_mode = 1;
 	static uint16_t count = 0;
@@ -145,7 +145,7 @@ state_t display_menu(state_t state){
 		display.fade_level[1] = 5;
 		display.fade_level[2] = 5;
 		display.fade_level[3] = 5;
-		leds_set(ENABLE, 250, 0, 250);
+		timer_leds_set(ENABLE, 250, 0, 250);
 		count = 0;
 	}
 
@@ -209,13 +209,14 @@ state_t display_menu(state_t state){
 	return state;
 }
 
+/*===========================================================================*/
 /* 
 * TRANSITION selection
 * Four user-selectable transitions. Transitions are only visible when in
 * DISPLAY_TIME mode, not here in the menu
 */
-state_t set_transitions(state_t state){
-
+state_t set_transitions(state_t state)
+{
 	static uint8_t intro = TRUE;
 	static uint16_t count = 0;
 	static uint8_t toggle = 0;
@@ -231,7 +232,7 @@ state_t set_transitions(state_t state){
 		display.d2 = BLANK;
 		display.d3 = BLANK;
 		count = 0;
-		leds_set(ENABLE, 100, 10, 10);
+		timer_leds_set(ENABLE, 100, 10, 10);
 	}
 
 	/*
@@ -296,8 +297,9 @@ state_t set_transitions(state_t state){
 -------------------------- L O C A L   F U N C T I O N S ----------------------
 -----------------------------------------------------------------------------*/
 
-static uint8_t change_transition_mode(uint8_t dir){
-
+/*===========================================================================*/
+static uint8_t change_transition_mode(uint8_t dir)
+{
 	uint8_t tmp;
 
 	if(dir == UP){

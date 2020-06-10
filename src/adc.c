@@ -22,8 +22,6 @@
 ******************************************************************************/
 
 #include "adc.h"
-#include "config.h"
-#include "uart.h"
 
 #include <avr/io.h>
 #include <avr/pgmspace.h>
@@ -34,16 +32,31 @@
 /******************************************************************************
 ******************* C O N S T A N T   D E F I N I T I O N S *******************
 ******************************************************************************/
+
+#define	ADC_PS_DIV8		(1<<ADPS1 | 1<<ADPS0)
+#define	ADC_PS_DIV16	(1<<ADPS2)
+#define	ADC_PS_DIV128	(1<<ADPS2 | 1<<ADPS1 | 1<<ADPS0)
+#define ADC_MUX_MASK	(1<<MUX4 | 1<<MUX3 | 1<<MUX2 | 1<<MUX1 | 1<<MUX0)
+
+#define ADC_V_HV		0										/* ADC0 */
+#define ADC_V_CTL_REG	(1<<MUX0)								/* ADC1 */
+#define ADC_V_IN		(1<<MUX1)								/* ADC2 */
+#define ADC_V_TST		(1<<MUX1 | 1<<MUX0)						/* ADC3 */
+#define ADC_V_REF 		(1<<MUX4 | 1<<MUX3 | 1<<MUX2 | 1<<MUX1)	/* V_REF */
+
 /* 
 * ADC nominal voltages:
 */
-#define V_HV  			3.794	// nominal 160V
-#define V_HV_OFF		0.273	// nominal 11.5V
-#define V_CTL_REG 		2.12	// nominal 8V
-#define V_CTL_REG_OFF 	0.0		// nominal 0V
-#define V_IN 			3.01	// nominal 11.4V
-#define V_REF 			1.1		// nominal 1.1V
-#define V_DD 			4.3		// nominal MCU voltage v_dd
+#define V_HV  			((float) 3.794)	// nominal 160V
+#define V_HV_OFF		((float) 0.273)	// nominal 11.5V
+#define V_CTL_REG 		((float) 2.12)	// nominal 8V
+#define V_CTL_REG_OFF 	((float) 0.0)	// nominal 0V
+#define V_IN 			((float) 3.01)	// nominal 11.4V
+#define V_REF 			((float) 1.1)	// nominal 1.1V
+#define V_DD 			((float) 4.3)	// nominal MCU voltage v_dd
+
+// ADC "oversampling", i.e. # of ADC readings per channel
+#define ADC_READ_N		5
 
 // Structure for the ADC voltage measurements
 typedef struct {
@@ -58,19 +71,21 @@ typedef struct {
 ******************* F U N C T I O N   D E F I N I T I O N S *******************
 ******************************************************************************/
 
-// prototype functions with local scope
 static void convert_and_send(uint16_t v, float c, float what, float v_dd);
 
-void adc_init(void){
+/*===========================================================================*/
 /* 
 * ADC conversions are not enabled here. Just the necessary prescaler and
 * multiplexer mask cleared
 */
+void adc_init(void)
+{
 	ADMUX &= ~(ADC_MUX_MASK);		// Clear ADC mux selection
 	ADMUX |= (1<<REFS0);			// Choose AVcc as ADC reference
 	ADCSRA |= ADC_PS_DIV16;			// Set prescaler
 }
 
+/*===========================================================================*/
 void adc_set(uint8_t state){
 
 	if(state)
@@ -79,8 +94,9 @@ void adc_set(uint8_t state){
 		ADCSRA &= ~(1<<ADEN);		// Disable ADC conversions
 }
 
-uint16_t adc_read(uint8_t adcx){
-	
+/*===========================================================================*/
+uint16_t adc_read(uint8_t adcx)
+{	
 	uint8_t i;
 	uint16_t avg = 0;
 
@@ -103,14 +119,15 @@ uint16_t adc_read(uint8_t adcx){
 	return avg;
 }
 
-uint8_t adc_voltages_test(void){
+/*===========================================================================*/
 /*
 * Check System Voltages
 * The MCU is NOT directly fed by the 5V rail, but it's placed after a diode.
 * Thus, we rely on the value of the internal reference voltage to deduce the
 * voltage reference for the ADC (the MCU rail voltage)
 */
-
+uint8_t adc_voltages_test(void)
+{
 	uint16_t v_ref_raw;
 	float v_dd;
 	voltage_s v_hv, v_ctl_reg, v_in;
@@ -164,12 +181,14 @@ uint8_t adc_voltages_test(void){
 	return ((v_hv.good && v_ctl_reg.good && v_in.good));
 }
 
-uint8_t adc_factory_test_check(void){
+/*===========================================================================*/
 /*
-* Checks V_TST pin 3 thimes. If any of the 3 measurements gives a voltage
+* Checks V_TST pin 3 times. If any of the 3 measurements gives a voltage
 * greater than (approximately) 0.5V, it returns FALSE.
 * In other words, all 3 measurements should be below 0.5V to return TRUE
 */
+uint8_t adc_factory_test_check(void)
+{
 	uint8_t t = TRUE;
 
 	for(uint8_t i = 0; i < 3; i++){
@@ -182,13 +201,15 @@ uint8_t adc_factory_test_check(void){
 	return t;
 }
 
-void adc_factory_voltages_test(uint8_t boost, uint8_t *p){
+/*===========================================================================*/
 /*
 * Performs the same voltage reading that adc_voltages_test() does, but it
 * takes into account the current state of the boost controller.
 * At the end of the test, it stores the reslults using the vector pointer
 * that was passed to the function.
 */
+void adc_factory_voltages_test(uint8_t boost, uint8_t *p)
+{
 	uint16_t v_ref_raw;
 	float v_dd;
 	uint8_t v_dd_good;
@@ -263,8 +284,13 @@ void adc_factory_voltages_test(uint8_t boost, uint8_t *p){
 	*(p + 3) = v_dd_good;
 }
 
-static void convert_and_send(uint16_t v, float c, float what, float v_dd){
+/*-----------------------------------------------------------------------------
+--------------------- I N T E R N A L   F U N C T I O N S ---------------------
+-----------------------------------------------------------------------------*/
 
+/*===========================================================================*/
+static void convert_and_send(uint16_t v, float c, float what, float v_dd)
+{
 	uint8_t integer, decimal;
 	char integer_str[5], decimal_str[5];
 	float fVoltage, float_part;

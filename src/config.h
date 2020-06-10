@@ -27,13 +27,18 @@
 #include <stdint.h>		/* Standard variable types */
 #include <avr/io.h>		/* Device specific ports/peripherals */
 
+/******************************************************************************
+******************* C O N S T A N T   D E F I N I T I O N S *******************
+******************************************************************************/
+
 #define FIRMWARE_DATE 	"15-NOV-2018"
 
 // 16MHz ceramic resonator, prescaled by 8
 #define F_CPU			2000000UL
 // A non-usual baud rate, but it's needed due to the low operating frequency,
 // so that it may work with no errors
-#define BAUD 			9600UL
+#define BAUD 			125000UL
+//#define BAUD 			19200UL
 
 // GENERIC BOOLEAN MACROS
 #define TRUE		0x01
@@ -124,7 +129,6 @@ typedef enum {
 	SYSTEM_RESET
 } state_t;
 
-
 /******************************************************************************
 ***************** S T R U C T U R E   D E C L A R A T I O N S *****************
 ******************************************************************************/
@@ -180,8 +184,8 @@ typedef struct {
 	uint8_t delay1;			// flag; delay 1 elapsed
 	uint8_t delay2;			// flag; delay 2 elapsed
 	uint8_t delay3;			// flag; delay 3 elapsed
+	uint8_t (*check)();
 } btn_s;
-
 
 /******************************************************************************
 ******************** E X T E R N A L   V A R I A B L E S **********************
