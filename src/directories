@@ -1,0 +1,138 @@
+
+Directories where header files are located for AVR-GCC
+
+
+/usr/lib/avr
+
+drwxr-xr-x   6 root root 4096 may 27 12:21 ./
+drwxr-xr-x 124 root root 4096 may 27 12:21 ../
+drwxr-xr-x   2 root root 4096 may 27 12:20 bin/
+drwxr-xr-x   6 root root 4096 may 27 12:21 include/
+drwxr-xr-x  19 root root 4096 may 27 12:21 lib/
+drwxr-xr-x   4 root root 4096 may 27 12:20 x86_64-linux-gnu/
+
+---------------------------------------------------------------------
+
+/usr/lib/avr/include
+
+drwxr-xr-x 6 root root  4096 may 27 12:21 ./
+drwxr-xr-x 6 root root  4096 may 27 12:21 ../
+-rw-r--r-- 1 root root  2559 feb 16  2019 alloca.h
+-rw-r--r-- 1 root root  3831 feb 16  2019 assert.h
+drwxr-xr-x 2 root root 16384 may 27 12:21 avr/
+drwxr-xr-x 2 root root  4096 may 27 12:21 compat/
+-rw-r--r-- 1 root root  5309 feb 16  2019 ctype.h
+-rw-r--r-- 1 root root  4587 feb 16  2019 errno.h
+-rw-r--r-- 1 root root    23 feb 16  2019 fcntl.h
+-rw-r--r-- 1 root root 15788 feb 16  2019 inttypes.h
+-rw-r--r-- 1 root root   363 feb 16  2019 locale.h
+-rw-r--r-- 1 root root 15620 feb 16  2019 math.h
+-rw-r--r-- 1 root root  5132 feb 16  2019 setjmp.h
+-rw-r--r-- 1 root root   611 feb 16  2019 signal.h
+-rw-r--r-- 1 root root  2022 feb 16  2019 stdfix-avrlibc.h
+-rw-r--r-- 1 root root 16717 feb 16  2019 stdint.h
+-rw-r--r-- 1 root root 36387 feb 16  2019 stdio.h
+-rw-r--r-- 1 root root 25152 feb 16  2019 stdlib.h
+-rw-r--r-- 1 root root 24461 feb 16  2019 string.h
+drwxr-xr-x 2 root root  4096 may 27 12:21 sys/
+-rw-r--r-- 1 root root 18643 feb 16  2019 time.h
+-rw-r--r-- 1 root root   183 feb 16  2019 unistd.h
+drwxr-xr-x 2 root root  4096 may 27 12:21 util/
+
+/usr/lib/avr/include/avr
+cd
+ALL AVR IO LIBRARIES, INCLUDING:
+	- io.h
+	- iom324a.h
+	- iom324pa.h
+	- iom324p.h
+
+-------------------------------------------------------------------
+
+/usr/lib/avr/lib
+
+drwxr-xr-x 19 root root   4096 may 27 12:21 ./
+drwxr-xr-x  6 root root   4096 may 27 12:21 ../
+drwxr-xr-x  3 root root   4096 may 27 12:21 avr25/
+drwxr-xr-x  2 root root   4096 may 27 12:21 avr3/
+drwxr-xr-x  2 root root   4096 may 27 12:21 avr31/
+drwxr-xr-x  2 root root   4096 may 27 12:21 avr35/
+drwxr-xr-x  2 root root   4096 may 27 12:21 avr4/
+drwxr-xr-x  2 root root  12288 may 27 12:21 avr5/
+drwxr-xr-x  2 root root   4096 may 27 12:21 avr51/
+drwxr-xr-x  2 root root   4096 may 27 12:21 avr6/
+drwxr-xr-x  2 root root   4096 may 27 12:21 avrtiny/
+drwxr-xr-x  2 root root   4096 may 27 12:21 avrxmega2/
+drwxr-xr-x  3 root root   4096 may 27 12:21 avrxmega3/
+drwxr-xr-x  2 root root   4096 may 27 12:21 avrxmega4/
+drwxr-xr-x  2 root root   4096 may 27 12:21 avrxmega5/
+drwxr-xr-x  2 root root   4096 may 27 12:21 avrxmega6/
+drwxr-xr-x  2 root root   4096 may 27 12:21 avrxmega7/
+-rw-r--r--  1 root root   1596 feb 16  2019 crtat90c8534.o
+-rw-r--r--  1 root root   1248 feb 16  2019 crtat90s1200.o
+-rw-r--r--  1 root root   1852 feb 16  2019 crtat90s4414.o
+-rw-r--r--  1 root root   2020 feb 16  2019 crtat90s4434.o
+-rw-r--r--  1 root root   1852 feb 16  2019 crtat90s8515.o
+-rw-r--r--  1 root root   2020 feb 16  2019 crtat90s8535.o
+-rw-r--r--  1 root root   1292 feb 16  2019 crtattiny11.o
+-rw-r--r--  1 root root   1332 feb 16  2019 crtattiny12.o
+-rw-r--r--  1 root root   1456 feb 16  2019 crtattiny15.o
+-rw-r--r--  1 root root   2884 feb 16  2019 crtattiny28.o
+drwxr-xr-x  2 root root   4096 may 27 12:20 ldscripts/
+-rw-r--r--  1 root root  10828 feb 16  2019 libat90c8534.a
+-rw-r--r--  1 root root   6624 feb 16  2019 libat90s1200.a
+-rw-r--r--  1 root root  10796 feb 16  2019 libat90s4414.a
+-rw-r--r--  1 root root  10796 feb 16  2019 libat90s4434.a
+-rw-r--r--  1 root root  10828 feb 16  2019 libat90s8515.a
+-rw-r--r--  1 root root  10828 feb 16  2019 libat90s8535.a
+-rw-r--r--  1 root root   6624 feb 16  2019 libattiny11.a
+-rw-r--r--  1 root root   6624 feb 16  2019 libattiny12.a
+-rw-r--r--  1 root root   6624 feb 16  2019 libattiny15.a
+-rw-r--r--  1 root root   6624 feb 16  2019 libattiny28.a
+-rw-r--r--  1 root root 294966 feb 16  2019 libc.a
+-rw-r--r--  1 root root  65848 feb 16  2019 libm.a
+-rw-r--r--  1 root root   6066 feb 16  2019 libprintf_flt.a
+-rw-r--r--  1 root root   2758 feb 16  2019 libprintf_min.a
+-rw-r--r--  1 root root   7280 feb 16  2019 libscanf_flt.a
+-rw-r--r--  1 root root   3944 feb 16  2019 libscanf_min.a
+drwxr-xr-x  2 root root   4096 may 27 12:21 tiny-stack/
+
+-----------------------------------------------------------------------
+
+/usr/lib/gcc/avr/5.4.0/
+
+drwxr-xr-x 23 root root     4096 may 27 12:21 ./
+drwxr-xr-x  3 root root     4096 may 27 12:20 ../
+drwxr-xr-x  3 root root     4096 may 27 12:21 avr25/
+drwxr-xr-x  2 root root     4096 may 27 12:21 avr3/
+drwxr-xr-x  2 root root     4096 may 27 12:21 avr31/
+drwxr-xr-x  2 root root     4096 may 27 12:21 avr35/
+drwxr-xr-x  2 root root     4096 may 27 12:21 avr4/
+drwxr-xr-x  2 root root     4096 may 27 12:21 avr5/
+drwxr-xr-x  2 root root     4096 may 27 12:21 avr51/
+drwxr-xr-x  2 root root     4096 may 27 12:21 avr6/
+drwxr-xr-x  2 root root     4096 may 27 12:21 avrtiny/
+drwxr-xr-x  2 root root     4096 may 27 12:21 avrxmega2/
+drwxr-xr-x  3 root root     4096 may 27 12:21 avrxmega3/
+drwxr-xr-x  2 root root     4096 may 27 12:21 avrxmega4/
+drwxr-xr-x  2 root root     4096 may 27 12:21 avrxmega5/
+drwxr-xr-x  2 root root     4096 may 27 12:21 avrxmega6/
+drwxr-xr-x  2 root root     4096 may 27 12:21 avrxmega7/
+-rwxr-xr-x  1 root root 12215856 dic 27  2018 cc1*
+-rwxr-xr-x  1 root root 13444688 dic 27  2018 cc1plus*
+-rwxr-xr-x  1 root root   535464 dic 27  2018 collect2*
+drwxr-xr-x  2 root root    20480 may 27 12:21 device-specs/
+drwxr-xr-x  2 root root     4096 may 27 12:21 include/
+drwxr-xr-x  2 root root     4096 may 27 12:21 include-fixed/
+drwxr-xr-x  3 root root     4096 may 27 12:21 install-tools/
+-rw-r--r--  1 root root  1031820 dic 27  2018 libgcc.a
+-rw-r--r--  1 root root    19590 dic 27  2018 libgcov.a
+-rw-r--r--  1 root root      972 dic 27  2018 liblto_plugin.la
+lrwxrwxrwx  1 root root       22 dic 27  2018 liblto_plugin.so -> liblto_plugin.so.0.0.0
+lrwxrwxrwx  1 root root       22 dic 27  2018 liblto_plugin.so.0 -> liblto_plugin.so.0.0.0
+-rw-r--r--  1 root root    72176 dic 27  2018 liblto_plugin.so.0.0.0
+-rwxr-xr-x  1 root root 11395824 dic 27  2018 lto1*
+-rwxr-xr-x  1 root root   781184 dic 27  2018 lto-wrapper*
+drwxr-xr-x  3 root root     4096 may 27 12:21 plugin/
+drwxr-xr-x  2 root root     4096 may 27 12:21 tiny-stack/
+
