@@ -1,2 +1,13 @@
 
-output/*
+# Output files
+./output/*
+*.o
+*.a
+*.asm
+*.i
+*.dep
+*.elf
+*.hex
+*.lst
+*.srec
+*.bin
