@@ -5,21 +5,21 @@
     
     {
       "title": "Welcome",
-      "url": "/docs/home/"
+      "url": "/nixie_clock/docs/home/"
     },
   
     
     
     {
       "title": "Themes",
-      "url": "/docs/themes/"
+      "url": "/nixie_clock/docs/themes/"
     },
   
     
     
     {
       "title": "Customization",
-      "url": "/docs/customization/"
+      "url": "/nixie_clock/docs/customization/"
     },
   
 
@@ -28,21 +28,21 @@
     
     {
       "title": "Markdown Cheatsheet",
-      "url": "/docs/cheatsheet/"
+      "url": "/nixie_clock/docs/cheatsheet/"
     },
   
     
     
     {
       "title": "Font Awesome Icon List",
-      "url": "/docs/font-awesome/"
+      "url": "/nixie_clock/docs/font-awesome/"
     },
   
     
     
     {
       "title": "Bootstrap Features",
-      "url": "/docs/bootstrap/"
+      "url": "/nixie_clock/docs/bootstrap/"
     },
   
 
@@ -50,12 +50,12 @@
   
   {
   "title": "Jekyll Doc Theme is published!",
-  "url": "/blog/2017/05/03/jekyll-doc-theme/"
+  "url": "/nixie_clock/blog/2017/05/03/jekyll-doc-theme/"
   },
   
   {
   "title": "Welcome to Jekyll!",
-  "url": "/blog/2017/02/01/welcome-to-jekyll/"
+  "url": "/nixie_clock/blog/2017/02/01/welcome-to-jekyll/"
   }
   
 ]

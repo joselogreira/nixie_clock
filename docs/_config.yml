@@ -1,15 +1,15 @@
 # Site settings
-title: Jekyll Doc Theme
+title: Nixie Tube Clock Documentation
 email: jose.logreira@gmail.com
 description: >
-  Personal blog where I post some of my
-  projects and professional profile.
+  Documentation of The Nixie Tube Clock developed
+  at Nuvitron and improved over time
 lang: en-US
 
-baseurl: "" # the subpath of your site, e.g. /blog/
-url: https://joselog.co # the base hostname & protocol for your site
-git_address: https://github.com/joselogreira/website
-#git_edit_address: https://github.com/aksakalli/jekyll-doc-theme/blob/gh-pages
+baseurl: "/nixie_clock" # the subpath of your site, e.g. /blog/
+url: https://joselogreira.github.io/nixie_clock # the base hostname & protocol for your site
+git_address: https://github.com/joselogreira/nixie_clock
+git_edit_address: https://github.com/joselogreira/nixie_clock/docs/
 
 # theme options from https://bootswatch.com/3/
 # comment out this to use default Bootstrap
