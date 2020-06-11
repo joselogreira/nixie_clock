@@ -28,9 +28,7 @@ plugins:
 exclude:
   - Gemfile
   - Gemfile.lock
-  - .idea/
-  - .gitignore
-  - README.md
+
 timezone: America/Bogota
 defaults:
 - scope:

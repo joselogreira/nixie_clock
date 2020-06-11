@@ -4,36 +4,36 @@
     
     
     {
-      "title": "",
-      "url": ""
+      "title": "Overall Structure",
+      "url": "/nixie_clock/docs/structure/"
     },
   
     
     
     {
-      "title": "",
-      "url": ""
+      "title": "ISR and multiplexing",
+      "url": "/nixie_clock/docs/isr/"
     },
   
     
     
     {
-      "title": "",
-      "url": ""
+      "title": "Sleep modes",
+      "url": "/nixie_clock/docs/sleep/"
     },
   
     
     
     {
-      "title": "",
-      "url": ""
+      "title": "Debounce routine",
+      "url": "/nixie_clock/docs/debounce/"
     },
   
     
     
     {
-      "title": "",
-      "url": ""
+      "title": "Buzzer themes",
+      "url": "/nixie_clock/docs/buzzer/"
     },
   
 
@@ -41,29 +41,29 @@
     
     
     {
-      "title": "",
-      "url": ""
+      "title": "MCU peripherals",
+      "url": "/nixie_clock/docs/peripherals/"
     },
   
     
     
     {
-      "title": "",
-      "url": ""
+      "title": "Voltages and power",
+      "url": "/nixie_clock/docs/power/"
     },
   
     
     
     {
-      "title": "",
-      "url": ""
+      "title": "Tubes' discrete multiplexing",
+      "url": "/nixie_clock/docs/multiplexing/"
     },
   
     
     
     {
-      "title": "",
-      "url": ""
+      "title": "Input protection",
+      "url": "/nixie_clock/docs/input/"
     },
   
 

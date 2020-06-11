@@ -1,14 +1,14 @@
 - title: Firmware
   docs:
-  - Overall structure
-  - ISR and multiplexing
-  - Sleep modes
-  - Debounce routine
-  - Buzzer themes
+  - structure
+  - isr
+  - sleep
+  - debounce
+  - buzzer
 
 - title: Hardware
   docs:
-  - MCU peripherals
-  - Voltages and power
-  - Tubes' discrete multiplexing
-  - Input protection
+  - peripherals
+  - power
+  - multiplexing
+  - input
