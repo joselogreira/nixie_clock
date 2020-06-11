@@ -4,22 +4,36 @@
     
     
     {
-      "title": "Welcome",
-      "url": "/nixie_clock/docs/home/"
+      "title": "",
+      "url": ""
     },
   
     
     
     {
-      "title": "Themes",
-      "url": "/nixie_clock/docs/themes/"
+      "title": "",
+      "url": ""
     },
   
     
     
     {
-      "title": "Customization",
-      "url": "/nixie_clock/docs/customization/"
+      "title": "",
+      "url": ""
+    },
+  
+    
+    
+    {
+      "title": "",
+      "url": ""
+    },
+  
+    
+    
+    {
+      "title": "",
+      "url": ""
     },
   
 
@@ -27,22 +41,29 @@
     
     
     {
-      "title": "Markdown Cheatsheet",
-      "url": "/nixie_clock/docs/cheatsheet/"
+      "title": "",
+      "url": ""
     },
   
     
     
     {
-      "title": "Font Awesome Icon List",
-      "url": "/nixie_clock/docs/font-awesome/"
+      "title": "",
+      "url": ""
     },
   
     
     
     {
-      "title": "Bootstrap Features",
-      "url": "/nixie_clock/docs/bootstrap/"
+      "title": "",
+      "url": ""
+    },
+  
+    
+    
+    {
+      "title": "",
+      "url": ""
     },
   
 

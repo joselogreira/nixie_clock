@@ -1,11 +1,14 @@
-- title: Getting Started
+- title: Firmware
   docs:
-  - home
-  - themes
-  - customization
+  - Overall structure
+  - ISR and multiplexing
+  - Sleep modes
+  - Debounce routine
+  - Buzzer themes
 
-- title: Examples
+- title: Hardware
   docs:
-  - cheatsheet
-  - font-awesome
-  - bootstrap
+  - MCU peripherals
+  - Voltages and power
+  - Tubes' discrete multiplexing
+  - Input protection

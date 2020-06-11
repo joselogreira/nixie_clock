@@ -10,9 +10,9 @@
     <link rel="stylesheet" href="/nixie_clock/assets/css/font-awesome.min.css">
 
     <link rel="shortcut icon" href="/nixie_clock/favicon.ico?1">
-    <!-- Begin Jekyll SEO tag v2.5.0 -->
+    <!-- Begin Jekyll SEO tag v2.6.1 -->
 <title>Nixie Tube Clock Documentation | Documentation of The Nixie Tube Clock developed at Nuvitron and improved over time</title>
-<meta name="generator" content="Jekyll v3.8.5" />
+<meta name="generator" content="Jekyll v3.8.7" />
 <meta property="og:title" content="Nixie Tube Clock Documentation" />
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="Documentation of The Nixie Tube Clock developed at Nuvitron and improved over time" />
@@ -21,7 +21,7 @@
 <meta property="og:url" content="http://localhost:4000/nixie_clock/" />
 <meta property="og:site_name" content="Nixie Tube Clock Documentation" />
 <script type="application/ld+json">
-{"@type":"WebSite","url":"http://localhost:4000/nixie_clock/","name":"Nixie Tube Clock Documentation","headline":"Nixie Tube Clock Documentation","description":"Documentation of The Nixie Tube Clock developed at Nuvitron and improved over time","@context":"http://schema.org"}</script>
+{"headline":"Nixie Tube Clock Documentation","@type":"WebSite","url":"http://localhost:4000/nixie_clock/","name":"Nixie Tube Clock Documentation","description":"Documentation of The Nixie Tube Clock developed at Nuvitron and improved over time","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
@@ -41,7 +41,7 @@
         <span class="icon-bar"></span>
       </button>
             <a class="navbar-brand" href="/nixie_clock/">
-                <span><img src="/nixie_clock/assets/img/logonav.png" alt="Logo"></span> Nixie Tube Clock Documentation
+                <span><img src="/nixie_clock/assets/img/lightning.png" alt="Logo"></span> Nixie Tube Clock Documentation
             </a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
@@ -50,8 +50,6 @@
                 <li ><a href="/nixie_clock/docs/home/">Docs</a></li>
                 
                 <li ><a href="/nixie_clock/blog/2017/05/03/jekyll-doc-theme/">Blog</a></li>
-
-                <li ><a href="/nixie_clock/about/"></a>About</li>
 
             </ul>
             <div class="navbar-right">
@@ -84,40 +82,39 @@
     <div class="row">
         <div class="col-md-6">
             <h2 class="header-light regular-pad">What is a Nixie Tube Clock?</h2>
-              <p class="lead">Jekyll is a simple, blog-aware, static site generator. It takes a template
-              directory containing raw text files in various formats, runs it through
-              a converter (like <a href="https://daringfireball.net/projects/markdown/">Markdown</a>)
-              and our <a href="https://github.com/Shopify/liquid/wiki">Liquid</a> renderer, and
-              spits out a complete, ready-to-publish static website suitable
-              for serving with your favorite web server. Jekyll also happens to be the engine
-              behind <a href="https://pages.github.com">GitHub Pages</a>, which means you can use Jekyll
-              to host your project’s page, blog, or website from GitHub’s servers <strong>for
-              free</strong>.</p>
+              <p class="lead">
+                <a href="https://nuvitron.com/nixie-tubes-made/">Nixie tubes</a> were popular like 40 years ago. Used in military-grade equipment, these <a href="https://en.wikipedia.org/wiki/Cold_cathode">cold cathode</a> tubes were some of the first technologies used for displays. There's quite a bit of <a href="https://nuvitron.com/nixie-tubes-made/">low vacuum science</a> involved, and require operation voltages that may seem insane for today's electronic devices: say 160 volts.
+              </p>
+              <p class="lead">
+                Tubes come in different flavours. The one used here is the reference <a href="http://www.tube-tester.com/sites/nixie/data/in-12a.htm"> IN-12</a>. Take a few of these, arrange them nicely and <i>voilà!</i>, you have a Nixie Clock. Why do they matter today? 'cuz they look <strong>awesome!</strong>. No, seriously, because their unique vintage look generates an exceptional contrast with today's modern aesthetic; and because the excercise of using modern hobby electronics to make them glow is a challenge worth taking.
+              </p>
         </div>
         <div class="col-md-6 text-center">
-            <img src="/nixie_clock/assets/img/jekyll-dark.png" alt="Jekyll logo" class="img-responsive">
+            <img src="/nixie_clock/assets/img/circuit_front.png" alt="Nuvitron Logo" class="img-responsive">
         </div>
     </div>
     <hr>
     <div class="row">
         <div class="col-sm-4">
-            <h1 class="text-center"><i class="fa fa-pencil" aria-hidden="true"></i></h1>
-            <h3 class="text-center">Easy to install and publish</h3>
-            <p>Get started by cloning source into GitHub account of your project. Thanks to <a href="https://pages.github.com">GitHub Pages</a>,
-              it will be automatically compiled and published under your account's (or organisation's) subdomain under <code>github.io</code>.
+            <h1 class="text-center"><i class="fa fa-cubes" aria-hidden="true"></i></h1>
+            <h3 class="text-center">Simple 8-bits MCU</h3>
+            <p>
+              From the AVR family, 32KB Flash and 2KB RAM is all that's needed to pack a lot of features, besides including a fair amount of peripheral timers to synchronize all time-critical tasks. Easily programmable via cheap third-party programmers and using the AVR linux toolchain.
+            </p>
+        </div>
+        <div class="col-sm-4">
+            <h1 class="text-center"><i class="fa fa-ban" aria-hidden="true"></i></h1>
+            <h3 class="text-center">No external RTC needed</h3>
+            <p>
+              The MCU includes a built-in RTC peripheral, and the whole CPU is able to run at voltages as low as 1.8V, thus, allowing the use of coin cells as back-up power and simplifying the overall design.
             </p>
         </div>
         <div class="col-sm-4">
             <h1 class="text-center"><i class="fa fa-cogs" aria-hidden="true"></i></h1>
-            <h3 class="text-center">Modular Styling and Templating</h3>
-            <p>This template uses <a href="https://github.com/twbs/bootstrap-sass">bootstrap-sass</a> along with <a href="https://bootswatch.com/">Bootwatch themes</a>.
-            You can change the theme or write your custom one by overwriting bootstrap sass variables for a different color set, font options, etc.</p>
-        </div>
-        <div class="col-sm-4">
-            <h1 class="text-center"><i class="fa fa-code-fork" aria-hidden="true"></i></h1>
-            <h3 class="text-center">Git-based source control</h3>
-            <p>Leverage from Git version control system by
-              maintaining your documentation along with the source code; publish the page when you merge to the master branch.</p>
+            <h3 class="text-center">Fully customizable</h3>
+            <p>
+              Code already includes many features such as RGB LED color variation routines, song themes for use with the alarm, built-in functional test, serial debug port, brightness levels variation, among others.
+            </p>
         </div>
     </div>
 </div>
