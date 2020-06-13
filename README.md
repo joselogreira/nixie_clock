@@ -39,7 +39,9 @@ For the sake of completeness, these files are also included [here][special].
 ## Project Folders
 - **src**: contains all the code files needed, including library files.
 - **special**: contains all *"additional"* files to support the MCU.
-- **output**: not included in the repo. Automatically created once the makefile recipe is executed.
+- **img**: some images of the project.
+- **docs**: GitHub [project page][ppage].
+- **output**: not included in the repo. Automatically created once the Make recipe is executed.
 
 ---
 
@@ -65,3 +67,4 @@ Released under the [MIT License][license] - 2020 Jose Logreira
 [324pb]: http://ww1.microchip.com/downloads/en/DeviceDoc/40001908A.pdf
 [mk2]: http://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-42093-AVR-ISP-mkII_UserGuide.pdf
 [license]: /LICENSE
+[ppage]: https://joselogreira.github.io/nixie_clock/

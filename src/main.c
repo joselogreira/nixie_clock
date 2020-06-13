@@ -271,12 +271,6 @@ RESET:
         // flags. Once set, the rest of the detection and debounce routine is
         // handled within buttons_check(), based on the 1ms execution period of
         // the main infinite loop
-        //if((btnX.query) || (btnY.query) || (btnZ.query)) buttons_check();
-        //if((btnX.query) || (btnY.query) || (btnZ.query)) {
-        //    buttons_check(&btnX);
-        //    buttons_check(&btnY);
-        //    buttons_check(&btnZ);
-        //}
         if(btnX.query) buttons_check(&btnX);
         if(btnY.query) buttons_check(&btnY);
         if(btnZ.query) buttons_check(&btnZ);
