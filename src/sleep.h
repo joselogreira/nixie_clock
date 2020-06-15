@@ -20,6 +20,7 @@
 #include "buzzer.h"
 #include "config.h"
 #include "external_interrupt.h"
+#include "menu_alarm.h"
 #include "timers.h"
 #include "uart.h"
 #include "util.h"
@@ -27,11 +28,21 @@
 #include <stdint.h>
 
 /******************************************************************************
+******************* C O N S T A N T   D E F I N I T I O N S *******************
+******************************************************************************/
+
+// RTC SLEEP MODES:
+// If enabled: RTC will keep running during sleep mode
+// If disabled: RTC will stop during sleep mode
+#define RTC_DISABLE 	FALSE
+#define RTC_ENABLE	 	TRUE
+
+/******************************************************************************
 ******************** F U N C T I O N   P R O T O T Y P E S ********************
 ******************************************************************************/
 
-state_t go_to_sleep(state_t state, uint8_t mode);
-void peripherals_disable(void);
+void go_to_sleep(volatile state_t *state, volatile uint8_t mode);
+void peripherals_disable(volatile uint8_t mode);
 void peripherals_enable(void);
 
 #endif /* SLEEP_H */

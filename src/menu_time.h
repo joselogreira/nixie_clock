@@ -19,16 +19,39 @@
 #include "buzzer.h"
 #include "config.h"
 #include "math.h"
+#include "menu_alarm.h"
 #include "timers.h"
 #include "uart.h"
 #include "util.h"
 
 /******************************************************************************
+***************** S T R U C T U R E   D E C L A R A T I O N S *****************
+******************************************************************************/
+
+typedef volatile struct {
+	uint8_t	sec;			// seconds
+	uint8_t min;			// minutes
+	uint8_t hour;			// hours
+	uint8_t s_units;		// BCD seconds' units
+	uint8_t s_tens;			// BCD seconds' tens
+	uint8_t m_units;		// BCD minutes' units
+	uint8_t m_tens;			// BCD minutes' tens
+	uint8_t h_units;		// BCD hours' units
+	uint8_t h_tens;			// BCD hours' tens
+	uint8_t update;			// flag. 1Hz update?
+	uint8_t hour_mode;		// 12/24h 
+	uint8_t day_period;		// AM/PM
+} time_s;
+
+extern time_s time;
+
+/******************************************************************************
 ******************** F U N C T I O N   P R O T O T Y P E S ********************
 ******************************************************************************/
 
-state_t display_time(state_t state);
-state_t set_time(state_t state);
-state_t set_hour_mode(state_t state);
+void time_init(void);
+void display_time(volatile state_t *state);
+void set_time(volatile state_t *state);
+void set_hour_mode(volatile state_t *state);
 
 #endif /* MENU_TIME_H */

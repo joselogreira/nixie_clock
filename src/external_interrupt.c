@@ -17,8 +17,58 @@
 #include <stdint.h>
 
 /******************************************************************************
+*************** G L O B A L   V A R S   D E F I N I T I O N S *****************
+******************************************************************************/
+
+btn_s btnX, btnY, btnZ;
+
+/******************************************************************************
+******************* C O N S T A N T   D E F I N I T I O N S *******************
+******************************************************************************/
+
+// Button pins
+#define BUTTON_X		(PINB & (1<<PINB7))
+#define BUTTON_Y		(PINB & (1<<PINB6))
+#define BUTTON_Z		(PINB & (1<<PINB5))
+
+/******************************************************************************
 ******************* F U N C T I O N   D E F I N I T I O N S *******************
 ******************************************************************************/
+
+/*===========================================================================*/
+void buttons_init(void)
+{
+	// STRUCTURE - btnX
+	btnX.query = FALSE;
+	btnX.action = FALSE;
+	btnX.lock = FALSE;
+	btnX.state = BTN_IDLE;
+	btnX.count = 0;
+	btnX.delay1 = FALSE;
+	btnX.delay2 = FALSE;
+	btnX.delay3 = FALSE;
+	btnX.check = btn_check_x;
+	// STRUCTURE - btnY
+	btnY.query = FALSE;
+	btnY.action = FALSE;
+	btnY.lock = FALSE;
+	btnY.state = BTN_IDLE;
+	btnY.count = 0;
+	btnY.delay1 = FALSE;
+	btnY.delay2 = FALSE;
+	btnY.delay3 = FALSE;
+	btnY.check = btn_check_y;
+	// STRUCTURE - btnZ
+	btnZ.query = FALSE;
+	btnZ.action = FALSE;
+	btnZ.lock = FALSE;
+	btnZ.state = BTN_IDLE;
+	btnZ.count = 0;
+	btnZ.delay1 = FALSE;
+	btnZ.delay2 = FALSE;
+	btnZ.delay3 = FALSE;
+	btnZ.check = btn_check_z;
+}
 
 /*===========================================================================*/
 /*

@@ -4,19 +4,16 @@
  *
  * Main program structure:
  * - Basically, there's one infinite loop: the main application loop
- * - Missing a second loop to operate all the debug and test modes to be 
- *   implemented
  * - Usr/operator decides which one to enter at boot time, either using 
  *   buttons or by other mechanism
  * - Application loop: implemented as a big switch statement, similar to a
  *   Finite State Machine. States are linked to the information displayed and 
  *   clock actions
  * - Interrupts are only allowed in one case:
- *      - At the end of every loop execution.
+ *      - Wihin each system state function, at the end of every loop execution.
  *
  * @author Jose Logreira
  * @date 24.04.2018
- *
  */
 
 /******************************************************************************
@@ -71,29 +68,14 @@ LOCKBITS = LOCK_BITS;
 /******************************************************************************
 *************** G L O B A L   V A R S   D E F I N I T I O N S *****************
 ******************************************************************************/
-/*
-*   Global data structures
-*   >Structure-type declaration -> config.h
-*   - time: all time-related quantities and states
-*   - alarm: all alarm-related quantities and states
-*   - display: contains display digits (1 through 4) and states. Values 
-*       are properly updated within every SYSTEM STATE. Structture used by a
-*       periodic ISR to update Nixie tubes display .
-*   - btnX/Y/Z: buttons-related states, counters, timers and flags
-*/
 
-time_s time;
-alarm_s alarm;
-display_s display;
-btn_s btnX, btnY, btnZ;
-
-// Stores the current SYSTEM STATE. It's passed and returned from functions.
-// Thus, it's preferable to keep it local to main.c. Modified also in ISR.
-volatile static state_t system_state = SYSTEM_INTRO;
+// Stores the current SYSTEM STATE. It's passed by reference to functions.
+// Modified also in ISR.
+volatile state_t system_state = SYSTEM_INTRO;
 
 // Main loop execute flag: set every 1ms by an ISR. Used to synchronize the
-// main loop execution every 1ms.
-volatile uint8_t main_loop_execute = FALSE;
+// system states' loop execution every 1ms.
+volatile uint8_t loop = FALSE;
 
 // sleep mode (RTC state when in sleep modes)
 // - RTC disabled: means oscillator stopped (POWER DOWN mode): This is only 
@@ -111,11 +93,10 @@ uint8_t system_reset = FALSE;
 
 int main(void)
 {
-
     /*
     * During normal execution, inside DISPLAY_TIME, if all three buttons are
     * pushed for DELAY3 milliseconds, execution jumps to RESET label. The
-    * purpose of it is to restore the system to an initial default state, even
+    * purpose is to restore the system to an initial default state, even
     * when the coin cell battery has been inserted. It forces the system to
     * go to sleep in PWR_DOWN mode, so that no RTC is enabled, thus keeping
     * the system halted until the next reconnection of the power adapter
@@ -123,7 +104,7 @@ int main(void)
 RESET:
     if(system_reset){
         sleep_mode = RTC_DISABLE;
-        peripherals_disable();
+        peripherals_disable(sleep_mode);
         BOOST_SET(DISABLE);
         while(EXT_PWR){
             // Toggle fast the onboard LED to indicate a reset condition
@@ -195,10 +176,11 @@ RESET:
     -------------------------------------------------------------------------*/
 
     /*
-    * Almost every case within the switch block is non-blocking, meaning that
-    * none of them waits (loops) for an event to happen. They all check state
-    * variables within the global structures and act upon them. Then they 
-    * return the proper SYSTEM STATE for the next loop iteration
+    * Almost every case within the switch block includes an infinite loop
+    * inside, which means that they handle all the system events inside of
+    * every function. Whenever there's an event that requires a change in 
+    * system state, the internal loop breaks and program execution returns to
+    * this main loop, to then jump into the appropiate function.
     *
     * The two exceptions to this rule are
     * - SYSTEM_SLEEP: if the execution enters SYSTEM_SLEEP, the MCU will go
@@ -206,12 +188,10 @@ RESET:
     * - SYSTEM_RESET: execution jumps to the beginning of main() to reset
     * all system, and goes to sleep later
     *
-    * All of the time, ISRs are disabled inside the switch. They are only
-    * allowed at the end of the infinite loop execution, where no additional
-    * tasks are being executed. That way, ISR execution won't overlap nor cause
-    * data corruption with other tasks.
+    * ISRs are serviced inside every system state function, at the end of the
+    * loop execution, where no additional tasks are being executed. That way,
+    * ISR execution won't overlap nor cause data corruption with other tasks.
     */
-
     while (TRUE)
     {
      	switch(system_state){
@@ -219,46 +199,46 @@ RESET:
             // System Goes to Sleep and CPU is halted, except for the 
             // asynchronous timer running the RTC
             case SYSTEM_SLEEP:
-                system_state = go_to_sleep(system_state, sleep_mode); break;
+                go_to_sleep(&system_state, sleep_mode); break;
             
             // First introductory animation
             case SYSTEM_INTRO:
-                system_state = intro(system_state); break;
+                intro(&system_state); break;
             // Normal operation: tells the time, including some animations
             case DISPLAY_TIME:
-                system_state = display_time(system_state); break;
+                display_time(&system_state); break;
             // Configuration menu: navigates through all menu options
             case DISPLAY_MENU:
-                system_state = display_menu(system_state); break;
+                display_menu(&system_state); break;
             // Config Option 1:
             case SET_TIME:
-                system_state = set_time(system_state); break;
+                set_time(&system_state); break;
             // Config Option 2:
             case SET_ALARM:
-                system_state = set_alarm(system_state); break;
+                set_alarm(&system_state); break;
             // Config Option 3:
             case SET_ALARM_ACTIVE:
-                system_state = set_alarm_active(system_state); break;
+                set_alarm_active(&system_state); break;
             // Config Option 4:
             case SET_HOUR_MODE:
-                system_state = set_hour_mode(system_state); break;
+                set_hour_mode(&system_state); break;
             // Config Option 5:
             case SET_TRANSITIONS:
-                system_state = set_transitions(system_state); break;
+                set_transitions(&system_state); break;
             // Config Option 6:
             case SET_ALARM_THEME:
-                system_state = set_alarm_theme(system_state); break;
+                set_alarm_theme(&system_state); break;
             
             // If alarm is triggered: 
             case ALARM_TRIGGERED:
-                system_state = alarm_triggered(system_state); break;
+                alarm_triggered(&system_state); break;
             
             // User-accessible test sequence: It tests all the tubes' digits,
             // the RTC 1Hz sync signal, the individual RGB LEDs and the buzzer.
             case USR_TEST:
-                system_state = usr_test(system_state); break;
+                usr_test(&system_state); break;
             case PRODUCTION_TEST:
-                system_state = production_test(system_state); break;
+                production_test(&system_state); break;
 
             // Jump to a reset state
             case SYSTEM_RESET:
@@ -266,35 +246,10 @@ RESET:
             default:
                 system_state = DISPLAY_TIME; break;
         }
-        
-        // BUTTONS check: Buttons are detected using an ISR which sets btnXYZ
-        // flags. Once set, the rest of the detection and debounce routine is
-        // handled within buttons_check(), based on the 1ms execution period of
-        // the main infinite loop
-        if(btnX.query) buttons_check(&btnX);
-        if(btnY.query) buttons_check(&btnY);
-        if(btnZ.query) buttons_check(&btnZ);
-        
-        /* 
-        * LOOP DELAY AND INTERRUPT ENABLE TIME --------------------------------
-        * All interrupts are served within the sei()-cli() block. This is to 
-        * reduce complexity within each routine (avoid the extra care required  
-        * for reentrant routines) and the use of atomic operations.
-        * main_loop_execute flag is set every 1ms by a timer-counter whose ISR 
-        * is enabled to produce interrupts every 1ms
-        */
-        sei();
-        // Wait for the next ms.
-        while((!main_loop_execute) && (system_state != SYSTEM_SLEEP));  
-        main_loop_execute = FALSE;
-        cli();        
-
     } /* While Loop */
+
     return 0;
 } /* Main Function */
-
-
-
 
 /******************************************************************************
 *******************************************************************************
@@ -397,7 +352,7 @@ ISR(TIMER2_OVF_vect){
 /*
 * TIMER 3 is used as a general purpose counter. Interrupts are generated every
 * 1ms and this time base is used for multiple purposes:
-* - main_loop_execute flag is set in every execution
+* - loop flag is set in every execution
 * - Nixie tubes multiplexing routine is handled based on an internal counter
 * - Nixie tubes fading routine is handled based on an internal counter
 */
@@ -409,7 +364,7 @@ ISR(TIMER3_COMPA_vect){
     static uint16_t cnt = 0;        // general purpose counter
 
     // execute main loop every 1ms.
-    main_loop_execute = TRUE;    
+    loop = TRUE;    
 
     if(system_state != PRODUCTION_TEST){
         // multiplex tubes' anode every 5ms. Independent of fading level

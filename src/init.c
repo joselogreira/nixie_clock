@@ -12,13 +12,6 @@
 ******************************************************************************/
 
 #include "init.h"
-#include "adc.h"
-#include "buzzer.h"
-#include "config.h"
-#include "eeprom.h"
-#include "external_interrupt.h"
-#include "timers.h"
-#include "uart.h"
 
 #include <avr/io.h>
 #include <stdint.h>
@@ -38,7 +31,7 @@ void boot(void)
 {
 	ports_init();
     system_defaults();
-    rom_init();
+	rom_init();
 
     /*
     * Peripherals initialization.
@@ -153,76 +146,13 @@ static void ports_init(void)
 }
 
 /*===========================================================================*/
+/*
+* Initializes all global system structures to default values
+*/
 static void system_defaults(void)
 {
-	/* Structures initial values */
-	// STRUCTURE - time:
-	time.sec = 0;
-	time.min = 0;
-	time.hour = 12;
-	time.s_units = 0;
-	time.s_tens = 0;
-	time.m_units = 0;
-	time.m_tens = 0;
-	time.h_units = 0;
-	time.h_tens = 0;
-	time.update = FALSE;
-	time.hour_mode = MODE_12H;
-	time.day_period = PERIOD_AM;
-	// STRUCTURE - alarm
-	alarm.sec = 0;
-	alarm.min = 0;
-	alarm.hour = 12;
-	alarm.s_units = 0;
-	alarm.s_tens = 0;
-	alarm.m_units = 0;
-	alarm.m_tens = 0;
-	alarm.h_units = 2;
-	alarm.h_tens = 1;
-	alarm.hour_mode = MODE_12H;
-	alarm.day_period = PERIOD_AM;
-	alarm.active = FALSE;
-	alarm.triggered = FALSE;
-	alarm.theme = SIMPLE_ALARM;
-	// STRUCTURE - display
-	display.mode = DISP_MODE_4;
-	display.d1 = 0;
-	display.d2 = 0;
-	display.d3 = 0;
-	display.d4 = 0;
-	display.set = ON;	
-	display.fade_level[0] = 5;
-	display.fade_level[1] = 5;
-	display.fade_level[2] = 5;
-	display.fade_level[3] = 5;
-	// STRUCTURE - btnX
-	btnX.query = FALSE;
-	btnX.action = FALSE;
-	btnX.lock = FALSE;
-	btnX.state = BTN_IDLE;
-	btnX.count = 0;
-	btnX.delay1 = FALSE;
-	btnX.delay2 = FALSE;
-	btnX.delay3 = FALSE;
-	btnX.check = btn_check_x;
-	// STRUCTURE - btnY
-	btnY.query = FALSE;
-	btnY.action = FALSE;
-	btnY.lock = FALSE;
-	btnY.state = BTN_IDLE;
-	btnY.count = 0;
-	btnY.delay1 = FALSE;
-	btnY.delay2 = FALSE;
-	btnY.delay3 = FALSE;
-	btnY.check = btn_check_y;
-	// STRUCTURE - btnZ
-	btnZ.query = FALSE;
-	btnZ.action = FALSE;
-	btnZ.lock = FALSE;
-	btnZ.state = BTN_IDLE;
-	btnZ.count = 0;
-	btnZ.delay1 = FALSE;
-	btnZ.delay2 = FALSE;
-	btnZ.delay3 = FALSE;
-	btnZ.check = btn_check_z;
+	time_init();
+    alarm_init();
+    buttons_init();
+    display_init();	
 }

@@ -21,6 +21,7 @@
 #include "config.h"
 #include "eeprom.h"
 #include "external_interrupt.h"
+#include "menu_time.h"
 #include "timers.h"
 #include "uart.h"
 #include "util.h"
@@ -31,7 +32,7 @@
 ******************** F U N C T I O N   P R O T O T Y P E S ********************
 ******************************************************************************/
 
-state_t usr_test(state_t state);
-state_t production_test(state_t state);
+void usr_test(volatile state_t *state);
+void production_test(volatile state_t *state);
 
 #endif /* DEBUG_H */

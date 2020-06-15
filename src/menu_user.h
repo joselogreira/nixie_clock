@@ -26,9 +26,9 @@
 ******************** F U N C T I O N   P R O T O T Y P E S ********************
 ******************************************************************************/
 
-state_t intro(state_t state);
-state_t display_menu(state_t state);
-state_t set_transitions(state_t state);
-state_t usr_test_tubes(state_t state);
+void intro(volatile state_t *state);
+void display_menu(volatile state_t *state);
+void set_transitions(volatile state_t *state);
+void usr_test_tubes(volatile state_t *state);
 
 #endif /* MENU_USER_H */

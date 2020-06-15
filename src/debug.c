@@ -38,112 +38,130 @@ static void print_rom_report(void);
 * - All RGB LED colors are working
 * - The buzzer sounds properly
 */
-state_t usr_test(state_t state)
+void usr_test(volatile state_t *state)
 {
-	static uint8_t intro = TRUE;
-	static uint16_t count = 0;
-	static uint8_t n = 0;
+	uint16_t count = 0;
+	uint8_t n = 0;
 	// leds related quantities
-	static uint8_t leds_cnt_up = TRUE;
-	static uint16_t leds_count = 0;
-	static uint8_t leds_color = 0;
-
-	if(intro){
-		intro = FALSE;
-		count = 0;
-		n = 0;
-		leds_cnt_up = TRUE;
-		leds_count = 0;
-		leds_color = 0;
-	}
+	uint8_t leds_cnt_up = TRUE;
+	uint16_t leds_count = 0;
+	uint8_t leds_color = 0;
 
 	/*
-	* LEDs SEQUENCES
-	* - breathing sequence: leds are synced to the RTC by means of the 
-	*   time.update flag.
+	* INFINITE LOOP
 	*/
-	if(leds_cnt_up){
-		if(leds_count < 995) leds_count++;
-		else leds_count = 995;
-	} else {
-		if(leds_count > 5) leds_count--;
-		else leds_count = 5;
-	}
-	// sync leds_count with the general counter (T = 1ms)
-	if(time.update){
-		time.update = FALSE;
-		if((leds_cnt_up) && (leds_count > 500)){
-			leds_cnt_up = FALSE;
-			leds_count = 995;
-		} else if((!leds_cnt_up) && (leds_count < 500)){
-			leds_cnt_up = TRUE;
-			leds_count 
-			= 5;
-			leds_color++;
-			if(leds_color >= 3) leds_color = 0;
+	while(TRUE){
+
+		/*
+		* LEDs SEQUENCES
+		* - breathing sequence: leds are synced to the RTC by means of the 
+		*   time.update flag.
+		*/
+		if(leds_cnt_up){
+			if(leds_count < 995) leds_count++;
+			else leds_count = 995;
+		} else {
+			if(leds_count > 5) leds_count--;
+			else leds_count = 5;
 		}
-	}
-	// LEDs update value every 5ms, not every ms (LEDs value does not change every ms)
-	if(!(leds_count % 5)){
-		uint8_t led_r = 0, led_g = 0, led_b = 0;
-		if(leds_color == 0){
-			led_r = (uint8_t)(leds_count>>4);
-			led_g = 0;
-			led_b = 0;
-		} else if(leds_color == 1){
-			led_r = 0;
-			led_g = (uint8_t)(leds_count>>4);
-			led_b = 0;
-		} else if(leds_color == 2){
-			led_r = 0;
-			led_g = 0;
-			led_b = (uint8_t)(leds_count>>4);;
+		// sync leds_count with the general counter (T = 1ms)
+		if(time.update){
+			time.update = FALSE;
+			if((leds_cnt_up) && (leds_count > 500)){
+				leds_cnt_up = FALSE;
+				leds_count = 995;
+			} else if((!leds_cnt_up) && (leds_count < 500)){
+				leds_cnt_up = TRUE;
+				leds_count 
+				= 5;
+				leds_color++;
+				if(leds_color >= 3) leds_color = 0;
+			}
 		}
-		timer_leds_set(ENABLE, led_r, led_g, led_b);
-	}
-
-	/*
-	* DISPLAY transition
-	*/
-	display.d1 = n;
-	display.d2 = n;
-	display.d3 = n;
-	display.d4 = n;	
-
-	/* 
-	* BUTTONS actions
-	* If any of the buttons is pressed, jump to SYSTEM_INTRO
-	*/
-	if((btnX.action) || (btnY.action) || (btnZ.action)){
-		btnX.action = FALSE;
-		btnY.action = FALSE;
-		btnZ.action = FALSE;
-		state = SYSTEM_INTRO;
-		intro = TRUE;
-	}
-
-	/*
-	*	GENERAL FUNCTION COUNTER and timeout
-	*/
-	count++;
-	if(count >= 500){
-		count = 0;
-		n++;
-		if(n >= 10){
-			n = 0;
-			buzzer_beep();
+		// LEDs update value every 5ms, not every ms (LEDs value does not change every ms)
+		if(!(leds_count % 5)){
+			uint8_t led_r = 0, led_g = 0, led_b = 0;
+			if(leds_color == 0){
+				led_r = (uint8_t)(leds_count>>4);
+				led_g = 0;
+				led_b = 0;
+			} else if(leds_color == 1){
+				led_r = 0;
+				led_g = (uint8_t)(leds_count>>4);
+				led_b = 0;
+			} else if(leds_color == 2){
+				led_r = 0;
+				led_g = 0;
+				led_b = (uint8_t)(leds_count>>4);;
+			}
+			timer_leds_set(ENABLE, led_r, led_g, led_b);
 		}
-	}
 
-	return state;
+		/*
+		* DISPLAY transition
+		*/
+		display.d1 = n;
+		display.d2 = n;
+		display.d3 = n;
+		display.d4 = n;	
+		
+		/* 
+		* BUTTONS check: Buttons are detected using an ISR which sets btnXYZ
+	    * flags. Once set, the rest of the detection and debounce routine is
+	    * handled within buttons_check(), based on the 1ms execution period of
+	    * the main infinite loop
+	    *
+	    * BUTTONS actions:
+		* - If any of the buttons is pressed, jump to SYSTEM_INTRO
+		*/
+		if(btnX.query) buttons_check(&btnX);
+	    if(btnY.query) buttons_check(&btnY);
+	    if(btnZ.query) buttons_check(&btnZ);
+		
+		if((btnX.action) || (btnY.action) || (btnZ.action)){
+			btnX.action = FALSE;
+			btnY.action = FALSE;
+			btnZ.action = FALSE;
+			*state = SYSTEM_INTRO;
+		}
+
+		/*
+		*	GENERAL FUNCTION COUNTER and timeout
+		*/
+		count++;
+		if(count >= 500){
+			count = 0;
+			n++;
+			if(n >= 10){
+				n = 0;
+				buzzer_beep();
+			}
+		}
+
+		/* 
+		* LOOP DELAY AND INTERRUPT ENABLE TIME --------------------------------
+		* All interrupts are served within the sei()-cli() block. This is to 
+		* avoid the extra care required for arbitrarily triggered ISRs and the 
+		* use of atomic operations. "loop" flag is set every 1ms by a timer
+		* whose ISR is enabled to produce interrupts every 1ms
+		*/
+		sei();
+		// Wait for the next ms.
+		while(!loop);
+		loop = FALSE;
+		cli();
+		// If system state changed, exit fuction.
+		if(*state != USR_TEST)
+			break;
+
+	}	/* INFINITE LOOP */
 }
 
 /*===========================================================================*/
 /*
-* This is a SEQUENTIAL (or BLOCKING) function, meaning that it does not run 
-* every 1ms (as the other functions in the main loop), but rather it executes
-* some functions sequentially to test all possible testable things by the MCU.
-* These are:
+* This is a SEQUENTIAL (or BLOCKING) function, meaning that it does not loop
+* every 1ms, but rather it executes some functions sequentially to test all
+* possible testable things by the MCU. These are:
 * - Voltages: 
 * 	- Boost voltage: turns it on and off, and measures output
 *   - Boost controller voltage regulator
@@ -156,18 +174,18 @@ state_t usr_test(state_t state)
 * The MCU reports each step using the serial interface, and stores the results
 * in ROM. This report can then be printed out later to further debug the system
 */
-state_t production_test(state_t state)
+void production_test(volatile state_t *state)
 {
  	uint16_t cnt = 0, x = 0;	// auxiliary counters
 	uint8_t clock_ok = TRUE;	// flags to control the test execution flow
 	uint8_t buzzer_ok = TRUE;	// flags to control the test execution flow
-	char c;					// char received
-	uint8_t test1[8];		// vectors to store results
-	uint8_t test2[8];		// vectors to store results
-	uint8_t test3[8];		// vectors to store results
+	char c;						// char received
+	uint8_t test1[8];			// vectors to store results
+	uint8_t test2[8];			// vectors to store results
+	uint8_t test3[8];			// vectors to store results
 	uint8_t *p[] = {test1, test2, test3};	// auxiliary pointer to vectors
-	uint16_t times[3];		// vectors to store results
-	uint8_t leds_ok[4];		// vectors to store results
+	uint16_t times[3];			// vectors to store results
+	uint8_t leds_ok[4];			// vectors to store results
 
 	/* 
 	* Fun fact: If the Serial-to-USB adapter is connected to the circuit first,
@@ -225,14 +243,14 @@ state_t production_test(state_t state)
 				uart_send_string_p(PSTR("\n\r\n\r < REPORT END >"));
 				uart_send_string_p(PSTR("\n\rPress any key to exit\n\r"));
 				uart_read_char();
-				state = SYSTEM_INTRO;
-				return state;
+				*state = SYSTEM_INTRO;
+				return;
 			}
 		}
 	} else if(c == 'q'){
 		// quit factory test
-		state = SYSTEM_INTRO;
-		return state;
+		*state = SYSTEM_INTRO;
+		return;
 	}
 
 	/*************************************************************************/
@@ -274,7 +292,7 @@ state_t production_test(state_t state)
  	times[0] = 0;
  	times[1] = 0;
  	times[2] = 0;
- 	main_loop_execute = FALSE;
+ 	loop = FALSE;
  	time.update = FALSE;
  	
  	// Enable ISRs for this step, since it requires the general timer to
@@ -303,10 +321,10 @@ state_t production_test(state_t state)
 		 	time.update = FALSE;
 		 	while(!time.update);
 		 	time.update = FALSE;
-		 	main_loop_execute = FALSE;
+		 	loop = FALSE;
 		 	while(!time.update){
-		 		while(!main_loop_execute);
-		 		main_loop_execute = FALSE;
+		 		while(!loop);
+		 		loop = FALSE;
 		 		cnt++;
 		 	}
 		 	times[x] = cnt;
@@ -342,8 +360,8 @@ state_t production_test(state_t state)
 	
 	x = 0;
 	while((x < 3) && (buzzer_ok)){
-		while(!main_loop_execute);
-		main_loop_execute = FALSE;
+		while(!loop);
+		loop = FALSE;
 		// play three different themes, one after the other.
 		if(x == 0) buzzer_music(MAJOR_SCALE, ENABLE);
 		else if(x == 1) buzzer_music(SIMPLE_ALARM, ENABLE);
@@ -470,8 +488,7 @@ state_t production_test(state_t state)
 	uart_send_string_p(PSTR(" -----------> Press any key to continue\r\n\r\n"));
 	uart_read_char();
 
- 	state = SYSTEM_INTRO;
-	return state;
+ 	*state = SYSTEM_INTRO;
 }
 
 /*===========================================================================*/

@@ -48,7 +48,7 @@ static void ports_power_save(uint8_t state);
 * The steps to sleep and wake up are implemented within a switch() statement to
 * be able to jump back when needed
 */
-state_t go_to_sleep(state_t state, uint8_t mode)
+void go_to_sleep(volatile state_t *state, volatile uint8_t mode)
 {
 	uint8_t step = DISABLE_PERIPHERALS;
 	uint8_t sys = FALSE;
@@ -58,9 +58,9 @@ state_t go_to_sleep(state_t state, uint8_t mode)
 
 			case DISABLE_PERIPHERALS:
 				// disable all system and external peripheral
-				if(sleep_mode == RTC_ENABLE)
+				if(mode == RTC_ENABLE)
 					uart_send_string("\n\rGood Bye   ");
-				peripherals_disable();
+				peripherals_disable(mode);
 				step = SLEEP_CPU;
 				break;
 
@@ -71,9 +71,9 @@ state_t go_to_sleep(state_t state, uint8_t mode)
 				* ISR execution may break the timed shut down CPU sequence and may not go
 				* to sleep
 				*/
-				if(sleep_mode == RTC_DISABLE)
+				if(mode == RTC_DISABLE)
 					set_sleep_mode(SLEEP_MODE_PWR_DOWN);	// Select POWER_DOWN sleep
-				else if(sleep_mode == RTC_ENABLE)
+				else if(mode == RTC_ENABLE)
 					set_sleep_mode(SLEEP_MODE_PWR_SAVE);	// Select POWER_SAVE sleep
 				sleep_enable();						// Enable Sleep Mode 
 				sleep_bod_disable();				// Disable BOD when sleep 
@@ -94,7 +94,7 @@ state_t go_to_sleep(state_t state, uint8_t mode)
 				// if not present, go to sleep again 
 				if(EXT_PWR) {
 					step = ENABLE_SYSTEM;
-					sleep_mode = RTC_ENABLE;
+					mode = RTC_ENABLE;
 				} else {
 					step = SLEEP_CPU;
 				}
@@ -109,10 +109,10 @@ state_t go_to_sleep(state_t state, uint8_t mode)
 				_delay_ms(2000);
 				if(!adc_voltages_test()){
 				    system_reset = TRUE;
-				    state = SYSTEM_RESET;				    
+				    *state = SYSTEM_RESET;				    
 				} else {
-					if(alarm.triggered) state = ALARM_TRIGGERED;
-					else state = SYSTEM_INTRO;
+					if(alarm.triggered) *state = ALARM_TRIGGERED;
+					else *state = SYSTEM_INTRO;
 				}
 				sys = TRUE;				
 				break;
@@ -122,8 +122,6 @@ state_t go_to_sleep(state_t state, uint8_t mode)
 		}
 		if(sys) break;
 	}
-
-	return state;
 }
 
 /*===========================================================================*/
@@ -144,7 +142,7 @@ state_t go_to_sleep(state_t state, uint8_t mode)
 * * Buttons' pull-ups also disabled to avoid power consumption when
 *   pressed
 */
-void peripherals_disable(void)
+void peripherals_disable(volatile uint8_t mode)
 {
 	adc_set(DISABLE);
 	uart_set(DISABLE);
@@ -153,7 +151,7 @@ void peripherals_disable(void)
 	timer_base_set(DISABLE);
 	buttons_set(DISABLE);
 	// Disable RTC only if entering POWER DOWN
-	if(sleep_mode == RTC_DISABLE)
+	if(mode == RTC_DISABLE)
 		timer_rtc_set(DISABLE);
 	ports_power_save(DISABLE);
 }
