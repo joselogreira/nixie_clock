@@ -31,7 +31,7 @@ typedef struct {
 	uint8_t delay1;			// flag; delay 1 elapsed
 	uint8_t delay2;			// flag; delay 2 elapsed
 	uint8_t delay3;			// flag; delay 3 elapsed
-	uint8_t (*check)();
+	uint8_t (*check)();		// function pointer to a state check handler
 } btn_s;
 
 extern btn_s btnX, btnY, btnZ;

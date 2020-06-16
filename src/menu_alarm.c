@@ -535,15 +535,15 @@ void set_alarm_theme(volatile state_t *state)
 		if(btnX.query) buttons_check(&btnX);
 	    if(btnY.query) buttons_check(&btnY);
 	    if(btnZ.query) buttons_check(&btnZ);
-		// If Y pressed, switch to the previous tone
-		if((btnY.action) && (!btnY.delay1)){
-			btnY.action = FALSE;
+		// If Z pressed, switch to the previous tone
+		if((btnZ.action) && (!btnZ.delay1)){
+			btnZ.action = FALSE;
 			change_theme(DOWN);
 			count = 0;
 		}
 		// If Y pressed, switch to the next tone
 		if((btnY.action) && (!btnY.delay1)){
-			btnZ.action = FALSE;
+			btnY.action = FALSE;
 			change_theme(UP);
 			count = 0;
 		}

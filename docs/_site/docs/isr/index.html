@@ -15,19 +15,19 @@
 <meta name="generator" content="Jekyll v3.8.7" />
 <meta property="og:title" content="ISR and multiplexing" />
 <meta property="og:locale" content="en_US" />
-<meta name="description" content="ISR and multiplexing" />
-<meta property="og:description" content="ISR and multiplexing" />
-<link rel="canonical" href="http://localhost:5000/nixie_clock/docs/isr/" />
-<meta property="og:url" content="http://localhost:5000/nixie_clock/docs/isr/" />
+<meta name="description" content="There’re 4 Interrupt Service Routines in the systems. 2 related to timers and 2 related to digital pins state change. Each of them is configured and enabled during their respective peripheral initialization routine." />
+<meta property="og:description" content="There’re 4 Interrupt Service Routines in the systems. 2 related to timers and 2 related to digital pins state change. Each of them is configured and enabled during their respective peripheral initialization routine." />
+<link rel="canonical" href="http://localhost:4000/nixie_clock/docs/isr/" />
+<meta property="og:url" content="http://localhost:4000/nixie_clock/docs/isr/" />
 <meta property="og:site_name" content="Nixie Tube Clock Documentation" />
 <meta property="og:type" content="article" />
-<meta property="article:published_time" content="2020-06-11T13:55:35-05:00" />
+<meta property="article:published_time" content="2020-06-16T13:30:36-05:00" />
 <script type="application/ld+json">
-{"headline":"ISR and multiplexing","dateModified":"2020-06-11T13:55:35-05:00","datePublished":"2020-06-11T13:55:35-05:00","@type":"WebPage","url":"http://localhost:5000/nixie_clock/docs/isr/","description":"ISR and multiplexing","@context":"https://schema.org"}</script>
+{"datePublished":"2020-06-16T13:30:36-05:00","@type":"WebPage","dateModified":"2020-06-16T13:30:36-05:00","url":"http://localhost:4000/nixie_clock/docs/isr/","description":"There’re 4 Interrupt Service Routines in the systems. 2 related to timers and 2 related to digital pins state change. Each of them is configured and enabled during their respective peripheral initialization routine.","headline":"ISR and multiplexing","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
-    <link rel="alternate" type="application/rss+xml" title="Nixie Tube Clock Documentation" href="http://localhost:5000/nixie_clock/feed.xml" />
+    <link rel="alternate" type="application/rss+xml" title="Nixie Tube Clock Documentation" href="http://localhost:4000/nixie_clock/feed.xml" />
 </head>
 
 
@@ -153,7 +153,136 @@
 
         <div class="col-md-8">
             <h1>ISR and multiplexing</h1>
-            <div id="markdown-content-container"><h2 id="isr-and-multiplexing">ISR and multiplexing</h2>
+            <div id="markdown-content-container"><p>There’re 4 Interrupt Service Routines in the systems. 2 related to timers and 2 related to digital pins state change. Each of them is configured and enabled during their respective peripheral initialization routine.</p>
+
+<h2 id="real-time-clock">Real Time Clock</h2>
+
+<p>A distinctive feature of this project is the implementation of the RTC using one of the MCU timer peripherals (<strong>TIMER 2</strong>). This way, code complexity is reduced since no communication with an external RTC is required, and the ability to keep track of time when there’s no external power is preserved, since the backup coin cell battery powers the MCU just to allow the internal RTC peripheral to work. Further explanation about it can be found <a href="/nixie_clock/docs/sleep/">here</a>.</p>
+
+<p>Timer 2 works asynchronously: it has its own 32,768KHz low power watch crystal oscillator. Interrupts are generated once every second.</p>
+
+<p>The handler updates the <code class="language-plaintext highlighter-rouge">time</code> structure with new values, taking into account the period of day (AM/PM), and time format (12h/24h):</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">time</span><span class="p">.</span><span class="n">sec</span><span class="o">++</span><span class="p">;</span>
+<span class="k">if</span><span class="p">(</span><span class="n">time</span><span class="p">.</span><span class="n">sec</span> <span class="o">==</span> <span class="mi">60</span><span class="p">){</span>
+    <span class="n">time</span><span class="p">.</span><span class="n">sec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">time</span><span class="p">.</span><span class="n">min</span><span class="o">++</span><span class="p">;</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">time</span><span class="p">.</span><span class="n">min</span> <span class="o">==</span> <span class="mi">60</span><span class="p">){</span>
+        <span class="n">time</span><span class="p">.</span><span class="n">min</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="n">time</span><span class="p">.</span><span class="n">hour</span><span class="o">++</span><span class="p">;</span>
+
+        <span class="c1">// more code</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Also updates the BCD values of the digits to be displayed by the tubes:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">time</span><span class="p">.</span><span class="n">s_tens</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">sec</span> <span class="o">/</span> <span class="mi">10</span><span class="p">;</span>
+<span class="n">time</span><span class="p">.</span><span class="n">s_units</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">sec</span> <span class="o">%</span> <span class="mi">10</span><span class="p">;</span>
+<span class="n">time</span><span class="p">.</span><span class="n">m_tens</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">min</span> <span class="o">/</span> <span class="mi">10</span><span class="p">;</span>
+<span class="n">time</span><span class="p">.</span><span class="n">m_units</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">min</span> <span class="o">%</span> <span class="mi">10</span><span class="p">;</span>
+<span class="n">time</span><span class="p">.</span><span class="n">h_tens</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">hour</span> <span class="o">/</span> <span class="mi">10</span><span class="p">;</span>
+<span class="n">time</span><span class="p">.</span><span class="n">h_units</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="n">hour</span> <span class="o">%</span> <span class="mi">10</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>If the alarm is <code class="language-plaintext highlighter-rouge">ENABLE</code>, it checks for a match:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span><span class="p">(</span><span class="n">alarm</span><span class="p">.</span><span class="n">active</span><span class="p">){</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">alarm</span><span class="p">.</span><span class="n">hour</span> <span class="o">==</span> <span class="n">time</span><span class="p">.</span><span class="n">hour</span><span class="p">){</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">alarm</span><span class="p">.</span><span class="n">min</span> <span class="o">==</span> <span class="n">time</span><span class="p">.</span><span class="n">min</span><span class="p">){</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">alarm</span><span class="p">.</span><span class="n">sec</span> <span class="o">==</span> <span class="n">time</span><span class="p">.</span><span class="n">sec</span><span class="p">){</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">alarm</span><span class="p">.</span><span class="n">day_period</span> <span class="o">==</span> <span class="n">time</span><span class="p">.</span><span class="n">day_period</span><span class="p">){</span>
+                    <span class="n">match</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">;</span>
+                    <span class="n">alarm</span><span class="p">.</span><span class="n">triggered</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>And finally, if the clock is running with external power applied (12V adapter), it toggles an onboard LED and sends via the serial port (UART peripheral), a string with the current time in format <code class="language-plaintext highlighter-rouge">hh:mm:ss</code>:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span><span class="p">(</span><span class="n">EXT_PWR</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">RTC_SIGNAL_TOGGLE</span><span class="p">();</span>
+    <span class="kt">char</span> <span class="n">string</span><span class="p">[</span><span class="mi">9</span><span class="p">];</span>
+
+    <span class="cm">/* string construction */</span>
+
+    <span class="n">uart_send_string</span><span class="p">(</span><span class="n">string</span><span class="p">);</span>
+    <span class="n">uart_send_string</span><span class="p">(</span><span class="s">"</span><span class="se">\n\r</span><span class="s">"</span><span class="p">);</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="n">RTC_SIGNAL_SET</span><span class="p">(</span><span class="n">LOW</span><span class="p">);</span>
+<span class="p">}</span>   
+</code></pre></div></div>
+
+<p>When no external power is applied, the RTC is the only peripheral that remains awake keeping track of time. Every second the ISR awakens the MCU to process the time update and goes back to sleep again.</p>
+
+<h2 id="general-timer-counter">General timer counter</h2>
+
+<p>Uses <strong>TIMER 3</strong>. This timer generates interrupts every <strong>1ms</strong>. It has two main functions:</p>
+
+<ul>
+  <li>
+    <p>This is the one responsible for the system states’ timed loop execution by setting the <code class="language-plaintext highlighter-rouge">loop = TRUE;</code> flag.</p>
+  </li>
+  <li>
+    <p>It controls the Nixies’ multiplexing and fading scheme. Further explanation found <a href="/nixie_clock/docs/multiplexing/">here</a>. Tubes’ anodes are updated once every 5ms (thus, overall refresh rate is 50Hz for all four tubes), and tubes’ cathodes are updated once every 1ms (same as the timer period), the latter being the one responsible for the fading effect used in some animations.</p>
+  </li>
+</ul>
+
+<p>Using internal counters, once 5ms have elapsed, switch to the next tube:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// multiplex tubes' anode every 5ms. Independent of fading level</span>
+<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">cnt</span> <span class="o">%</span> <span class="mi">5</span><span class="p">)){</span>
+    <span class="c1">// change tube selection</span>
+    <span class="n">n_tube</span><span class="o">++</span><span class="p">;</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">n_tube</span> <span class="o">&gt;=</span> <span class="mi">4</span><span class="p">)</span> <span class="n">n_tube</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="c1">// enable tube anode</span>
+    <span class="n">set_tube</span><span class="p">(</span><span class="n">n_tube</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">n_fade</code> is also a counter (from 1 to 5) synced with the tube that’s currently being displayed. Since every tube’s anode is active for a period of 5ms, fading is achieved by varying the cathode’s active time: 0ms is fully OFF, 5ms if fully ON. Values in between give intermediate brightness levels. Since each tube may have different brightness (or fade) levels, individual values for each tube are stored within the <code class="language-plaintext highlighter-rouge">display.fade_level[]</code> structure member.</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span><span class="p">(</span><span class="n">n_fade</span> <span class="o">&lt;=</span> <span class="n">display</span><span class="p">.</span><span class="n">fade_level</span><span class="p">[</span><span class="n">n_tube</span><span class="p">]){</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">n_tube</span> <span class="o">==</span> <span class="n">TUBE_A</span><span class="p">)</span> <span class="n">set_digit</span><span class="p">(</span><span class="n">display</span><span class="p">.</span><span class="n">d1</span><span class="p">);</span>
+    <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">n_tube</span> <span class="o">==</span> <span class="n">TUBE_B</span><span class="p">)</span> <span class="n">set_digit</span><span class="p">(</span><span class="n">display</span><span class="p">.</span><span class="n">d2</span><span class="p">);</span>
+    <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">n_tube</span> <span class="o">==</span> <span class="n">TUBE_C</span><span class="p">)</span> <span class="n">set_digit</span><span class="p">(</span><span class="n">display</span><span class="p">.</span><span class="n">d3</span><span class="p">);</span>
+    <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">n_tube</span> <span class="o">==</span> <span class="n">TUBE_D</span><span class="p">)</span> <span class="n">set_digit</span><span class="p">(</span><span class="n">display</span><span class="p">.</span><span class="n">d4</span><span class="p">);</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="n">set_digit</span><span class="p">(</span><span class="n">BLANK</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="buttons-interrupts">Buttons interrupts</h2>
+
+<p>Buttons’ inputs to the MCU are pulled HIGH with internal pull-up resistors. When pressed, the input is pulled low. The interrupt handler is triggered with any edge detected (rising or falling edge). Thus, the filter for <em>falling edge</em> must be filtered inside the handler by checkig whether the actual input value is low. If so, then the <code class="language-plaintext highlighter-rouge">btnXYZ.query</code> flag gets set:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span><span class="p">((</span><span class="o">!</span><span class="p">(</span><span class="n">btnX</span><span class="p">.</span><span class="n">check</span><span class="p">)())</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">btnX</span><span class="p">.</span><span class="n">lock</span><span class="p">))){</span>
+    <span class="n">btnX</span><span class="p">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">;</span>
+<span class="p">}</span> <span class="k">else</span> <span class="nf">if</span><span class="p">((</span><span class="o">!</span><span class="p">(</span><span class="n">btnY</span><span class="p">.</span><span class="n">check</span><span class="p">)())</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">btnY</span><span class="p">.</span><span class="n">lock</span><span class="p">))){</span>
+    <span class="n">btnY</span><span class="p">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">;</span>
+<span class="p">}</span> <span class="k">else</span> <span class="nf">if</span><span class="p">((</span><span class="o">!</span><span class="p">(</span><span class="n">btnZ</span><span class="p">.</span><span class="n">check</span><span class="p">)())</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">btnZ</span><span class="p">.</span><span class="n">lock</span><span class="p">))){</span>
+    <span class="n">btnZ</span><span class="p">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">btnXYZ.lock</code> flag is used to implement a <em>“dead time”</em> when the button is released, so that program execution is able to ignore button actions for a period of time. This also makes part of the <a href="/nixie_clock/docs/debounce/">debounce</a> routine implemented.</p>
+
+<h2 id="external">External power interrupt</h2>
+
+<p>There’s a digital input pin in the MCU that senses the presence of external power (12V adapter). When the external power is removed, the system must immediately go to sleep while allowing the RTC to work. This ISR handles this case:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">EXT_PWR</span><span class="p">){</span>
+    <span class="c1">// Boost is automatically powered off (12V removed)</span>
+    <span class="n">RTC_SIGNAL_SET</span><span class="p">(</span><span class="n">LOW</span><span class="p">);</span>          <span class="c1">// Dont use RTC LED</span>
+    <span class="n">system_state</span> <span class="o">=</span> <span class="n">SYSTEM_SLEEP</span><span class="p">;</span>  <span class="c1">// GO TO SLEEP !!!</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>It disables the onboard debug LED and overrides the <code class="language-plaintext highlighter-rouge">system_state</code> variable to put it to sleep within the next millisecond.</p>
 </div>
             <div style="clear:both;">
               <p class="text-center">

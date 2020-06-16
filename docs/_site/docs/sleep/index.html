@@ -15,19 +15,19 @@
 <meta name="generator" content="Jekyll v3.8.7" />
 <meta property="og:title" content="Sleep modes" />
 <meta property="og:locale" content="en_US" />
-<meta name="description" content="Sleep modes" />
-<meta property="og:description" content="Sleep modes" />
-<link rel="canonical" href="http://localhost:5000/nixie_clock/docs/sleep/" />
-<meta property="og:url" content="http://localhost:5000/nixie_clock/docs/sleep/" />
+<meta name="description" content="The reason for the sleep modes is better understood by looking at the MCU power sources)." />
+<meta property="og:description" content="The reason for the sleep modes is better understood by looking at the MCU power sources)." />
+<link rel="canonical" href="http://localhost:4000/nixie_clock/docs/sleep/" />
+<meta property="og:url" content="http://localhost:4000/nixie_clock/docs/sleep/" />
 <meta property="og:site_name" content="Nixie Tube Clock Documentation" />
 <meta property="og:type" content="article" />
-<meta property="article:published_time" content="2020-06-11T13:55:35-05:00" />
+<meta property="article:published_time" content="2020-06-16T13:30:36-05:00" />
 <script type="application/ld+json">
-{"headline":"Sleep modes","dateModified":"2020-06-11T13:55:35-05:00","datePublished":"2020-06-11T13:55:35-05:00","@type":"WebPage","url":"http://localhost:5000/nixie_clock/docs/sleep/","description":"Sleep modes","@context":"https://schema.org"}</script>
+{"datePublished":"2020-06-16T13:30:36-05:00","@type":"WebPage","dateModified":"2020-06-16T13:30:36-05:00","url":"http://localhost:4000/nixie_clock/docs/sleep/","description":"The reason for the sleep modes is better understood by looking at the MCU power sources).","headline":"Sleep modes","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
-    <link rel="alternate" type="application/rss+xml" title="Nixie Tube Clock Documentation" href="http://localhost:5000/nixie_clock/feed.xml" />
+    <link rel="alternate" type="application/rss+xml" title="Nixie Tube Clock Documentation" href="http://localhost:4000/nixie_clock/feed.xml" />
 </head>
 
 
@@ -153,7 +153,171 @@
 
         <div class="col-md-8">
             <h1>Sleep modes</h1>
-            <div id="markdown-content-container"><h2 id="sleep-modes">Sleep modes</h2>
+            <div id="markdown-content-container"><p>The reason for the sleep modes is better understood by looking at the MCU <a href="/nixie_clock/docs/power/">power sources</a>).</p>
+
+<p>When the external power adapter is plugged in, the MCU is fully awake and all peripherals are working non-stop. When the external power is removed, the clock needs a mechanism to still keep track of the time, but of course minimize as much as possible the power consumption to avoid draining the coin cell battery too fast.</p>
+
+<p>A third situation needs to be considered: the decission of not using an exteral RTC comes with a tradeoff:</p>
+
+<ul>
+  <li>Typical RTC chips have super low power consumption. They can keep the time for months and even years without battery replacement.</li>
+  <li>ATmega324pb is a chip optimised for low power consumption, but it can’t reach the levels of independent RTCs. Thus, based on testing, it can only keep time for days and weeks, but not for months.</li>
+</ul>
+
+<p>So, there’s a problem during circuit testing, assembly, packaging and shipping: if the time between battery insertion to the circuit and customer delivery is greater than weeks, then the coin cell battery will be completely drained by then.</p>
+
+<p>Shipping the battery sepparately is legally and logistically much more complicated, and asking the customer to open up the clock and instert the battery is just not acceptable. Thus, a third power management case must be considered: that in which the coin cell battery is inserted, but since the power adapter is NOT detected, the MCU must go to <em>deep sleep</em> mode, disabling the RTC from keeping time until the customer receives the product and plugs it in for the first time. That way, battery life is preserved for much longer.</p>
+
+<p>Each situation is covered separately:</p>
+
+<h3 id="external-power-removal">External power removal:</h3>
+
+<p>The MCU is assumed to opperate in any of the active sytem states. The series of steps is described below:</p>
+
+<ol>
+  <li>
+    <p>Power adapter disconnect triggers the <a href="/nixie_clock/docs/isr/#external">external power Pin Change Interrupt flag</a>. The CPU will finish whatever is currently doing in any system state loop and jump to the ISR handler within 1ms.</p>
+  </li>
+  <li>ISR handler checks if power is effectively removed, disables debug LED and overrides current system state to force program flow to jump back to <em>main loop</em>, and start executing <code class="language-plaintext highlighter-rouge">go_to_sleep()</code> system state function.
+    <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ISR</span><span class="p">(</span><span class="n">PCINT2_vect</span><span class="p">)</span>
+<span class="p">{</span>
+ <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">EXT_PWR</span><span class="p">){</span>
+     <span class="c1">// Boost is automatically powered off (12V removed)</span>
+     <span class="n">RTC_SIGNAL_SET</span><span class="p">(</span><span class="n">LOW</span><span class="p">);</span>          <span class="c1">// Dont use RTC LED</span>
+     <span class="n">system_state</span> <span class="o">=</span> <span class="n">SYSTEM_SLEEP</span><span class="p">;</span>  <span class="c1">// GO TO SLEEP !!!</span>
+ <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">sleep_mode</code> variable passed to <code class="language-plaintext highlighter-rouge">go_to_sleep()</code> is one of two values: <code class="language-plaintext highlighter-rouge">RTC_DISABLE</code> or <code class="language-plaintext highlighter-rouge">RTC_ENABLE</code> (default). This determines whether the time keeping function (the RTC) remains active or not.</p>
+  </li>
+  <li>A sequence of steps is performed to disable all peripherals one by one, including buttons interrupts. When the sleep cause is the external power that was removed, the RTC remains active. <code class="language-plaintext highlighter-rouge">ports_power_save(ENABLE)</code> configures input/output ports to avoid wasting unnecesary current.
+    <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">peripherals_disable</span><span class="p">(</span><span class="k">volatile</span> <span class="kt">uint8_t</span> <span class="n">mode</span><span class="p">)</span>
+<span class="p">{</span>
+ <span class="n">adc_set</span><span class="p">(</span><span class="n">DISABLE</span><span class="p">);</span>
+ <span class="n">uart_set</span><span class="p">(</span><span class="n">DISABLE</span><span class="p">);</span>
+ <span class="n">buzzer_set</span><span class="p">(</span><span class="n">DISABLE</span><span class="p">);</span>
+ <span class="n">timer_leds_set</span><span class="p">(</span><span class="n">DISABLE</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+ <span class="n">timer_base_set</span><span class="p">(</span><span class="n">DISABLE</span><span class="p">);</span>
+ <span class="n">buttons_set</span><span class="p">(</span><span class="n">DISABLE</span><span class="p">);</span>
+ <span class="c1">// Disable RTC only if entering POWER DOWN</span>
+ <span class="k">if</span><span class="p">(</span><span class="n">mode</span> <span class="o">==</span> <span class="n">RTC_DISABLE</span><span class="p">)</span>
+     <span class="n">timer_rtc_set</span><span class="p">(</span><span class="n">DISABLE</span><span class="p">);</span>
+ <span class="n">ports_power_save</span><span class="p">(</span><span class="n">DISABLE</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>    </div>
+  </li>
+  <li>Selects the right <strong>sleep mode</strong>. <code class="language-plaintext highlighter-rouge">SLEEP_MODE_PWR_DOWN</code> is the deepest sleep mode. <code class="language-plaintext highlighter-rouge">SLEEP_MODE_PWR_SAVE</code> keeps the RTC running. Then, go to sleep. Program execution is halted at this point. The only interrupt sources (wake up sources) enabled are RTC interrupts (to update time) and external power reconnection.
+    <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span><span class="p">(</span><span class="n">mode</span> <span class="o">==</span> <span class="n">RTC_DISABLE</span><span class="p">)</span>
+ <span class="n">set_sleep_mode</span><span class="p">(</span><span class="n">SLEEP_MODE_PWR_DOWN</span><span class="p">);</span>	<span class="c1">// Select POWER_DOWN sleep</span>
+<span class="k">else</span> <span class="nf">if</span><span class="p">(</span><span class="n">mode</span> <span class="o">==</span> <span class="n">RTC_ENABLE</span><span class="p">)</span>
+ <span class="n">set_sleep_mode</span><span class="p">(</span><span class="n">SLEEP_MODE_PWR_SAVE</span><span class="p">);</span>	<span class="c1">// Select POWER_SAVE sleep</span>
+<span class="n">sleep_enable</span><span class="p">();</span>						<span class="c1">// Enable Sleep Mode </span>
+<span class="n">sleep_bod_disable</span><span class="p">();</span>				<span class="c1">// Disable BOD when sleep </span>
+<span class="n">sei</span><span class="p">();</span>
+<span class="n">sleep_cpu</span><span class="p">();</span>
+</code></pre></div>    </div>
+  </li>
+  <li>When the CPU wakes up, the first thing it does is to service the ISR call. Then, code execution return to the point right after where it went to sleep. Then it checks for the presence of external power. If present, enables all system peripherlas, performs some system checks and resumes normal execution. If not, goes back to sleep again.
+    <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span><span class="p">(</span><span class="n">EXT_PWR</span><span class="p">)</span> <span class="p">{</span>
+ <span class="n">step</span> <span class="o">=</span> <span class="n">ENABLE_SYSTEM</span><span class="p">;</span>
+ <span class="n">mode</span> <span class="o">=</span> <span class="n">RTC_ENABLE</span><span class="p">;</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+ <span class="n">step</span> <span class="o">=</span> <span class="n">SLEEP_CPU</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>    </div>
+  </li>
+  <li>Two system checks are performed before resuming normal execution: <code class="language-plaintext highlighter-rouge">adc_voltages_test()</code>, which checks normal system voltage levels, and <code class="language-plaintext highlighter-rouge">alarm.triggered</code> flag, which might have been set during sleep mode (given the alarm was enabled). After that, program execution is resumed as usual.
+    <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// check system voltages</span>
+<span class="n">_delay_ms</span><span class="p">(</span><span class="mi">2000</span><span class="p">);</span>
+<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">adc_voltages_test</span><span class="p">()){</span>
+ <span class="n">system_reset</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">;</span>
+ <span class="o">*</span><span class="n">state</span> <span class="o">=</span> <span class="n">SYSTEM_RESET</span><span class="p">;</span>				    
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+ <span class="k">if</span><span class="p">(</span><span class="n">alarm</span><span class="p">.</span><span class="n">triggered</span><span class="p">)</span> <span class="o">*</span><span class="n">state</span> <span class="o">=</span> <span class="n">ALARM_TRIGGERED</span><span class="p">;</span>
+ <span class="k">else</span> <span class="o">*</span><span class="n">state</span> <span class="o">=</span> <span class="n">SYSTEM_INTRO</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<h3 id="intentional-system-reset">Intentional system reset:</h3>
+
+<p>A general system reset can be enforced. It places the system in deep sleep mode (<code class="language-plaintext highlighter-rouge">SLEEP_MODE_PWR_DOWN</code>) which halts the RTC time keeping function. This is useful once the clock has been tested, the coin cell battery has been inserted, and it is desired to avoid the system from keeping time.</p>
+
+<ol>
+  <li>Once the clock is in the normal <code class="language-plaintext highlighter-rouge">DISPLAY_TIME</code> system state, all three buttons should be pressed at the same time for 2 seconds. This forces a system state override where the program execution will jump to <code class="language-plaintext highlighter-rouge">SYSTEM_RESET</code> and will halt the RTC peripheral.
+    <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// IF ALL THREE BUTTONS PRESSED DURING DELAY3, RESET SYSTEM AND GO TO SLEEP</span>
+<span class="k">if</span><span class="p">((</span><span class="n">btnX</span><span class="p">.</span><span class="n">action</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">btnX</span><span class="p">.</span><span class="n">delay3</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">btnY</span><span class="p">.</span><span class="n">action</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">btnY</span><span class="p">.</span><span class="n">delay3</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">btnZ</span><span class="p">.</span><span class="n">action</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">btnZ</span><span class="p">.</span><span class="n">delay3</span><span class="p">)){</span>
+ <span class="n">btnX</span><span class="p">.</span><span class="n">action</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">;</span>
+ <span class="n">btnY</span><span class="p">.</span><span class="n">action</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">;</span>
+ <span class="n">btnZ</span><span class="p">.</span><span class="n">action</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">;</span>
+ <span class="n">display</span><span class="p">.</span><span class="n">set</span> <span class="o">=</span> <span class="n">OFF</span><span class="p">;</span>
+ <span class="n">system_reset</span> <span class="o">=</span> <span class="n">TRUE</span><span class="p">;</span>
+ <span class="o">*</span><span class="n">state</span> <span class="o">=</span> <span class="n">SYSTEM_RESET</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>    </div>
+  </li>
+  <li>Once the program flow reaches <code class="language-plaintext highlighter-rouge">go_to_sleep()</code>, the sequence of events is exactly as described above, with the sole exception that now the sleep mode flag is set to <code class="language-plaintext highlighter-rouge">RTC_DISABLE</code>, and no RTC will be active. This way, the only wake up source will be the external power reconnection.</li>
+</ol>
+
+<h3 id="coin-cell-battery-insertion">Coin cell battery insertion:</h3>
+
+<p>If the coin cell battery is inserted in the circuit before it gets energized by the external power adapter, the MCU will start code execution as usual, so one of the firts tasks it must perform is to check for the existence of external power. Otherwise it should go to sleep in deep sleep mode.</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/*
+* Power source check:
+* Look for EXT_PWR pin. If there's an external power adapter connected,
+* Initialize RTC, enable Boost and all other peripherals. Run system.
+* If no voltage in EXT_PWR, it means that battery has been connected first.
+* In that case, do nothing and go to sleep.
+*/</span>
+<span class="k">if</span><span class="p">(</span><span class="n">EXT_PWR</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">sleep_mode</span> <span class="o">=</span> <span class="n">RTC_ENABLE</span><span class="p">;</span>
+    <span class="n">system_state</span> <span class="o">=</span> <span class="n">SYSTEM_INTRO</span><span class="p">;</span>
+    <span class="n">peripherals_enable</span><span class="p">();</span>
+    <span class="n">led_blink</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">40</span><span class="p">);</span>
+    <span class="n">uart_send_string_p</span><span class="p">(</span><span class="n">PSTR</span><span class="p">(</span><span class="s">"</span><span class="se">\n\r</span><span class="s">Firmware Version: "</span><span class="p">));</span>
+    <span class="n">uart_send_string_p</span><span class="p">(</span><span class="n">PSTR</span><span class="p">(</span><span class="n">FIRMWARE_DATE</span><span class="p">));</span>
+    <span class="n">uart_send_string_p</span><span class="p">(</span><span class="n">PSTR</span><span class="p">(</span><span class="s">"</span><span class="se">\n\r</span><span class="s">"</span><span class="p">));</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="n">sleep_mode</span> <span class="o">=</span> <span class="n">RTC_DISABLE</span><span class="p">;</span>
+    <span class="n">system_state</span> <span class="o">=</span> <span class="n">SYSTEM_SLEEP</span><span class="p">;</span>
+<span class="p">}</span> 
+</code></pre></div></div>
+
+<p>If no external power is found, some initialization tests are skipped, like factory test and voltages test, and it jumps right into the <code class="language-plaintext highlighter-rouge">go_to_sleep()</code> function, inside of which execution flow follows the same pattern described above.</p>
+
+<h3 id="operation-frequency">Operation frequency</h3>
+
+<p>MCU operation frequency range is dependent on supply voltage. Datasheet gives:</p>
+
+<p><img src="/nixie_clock/assets/img/mcu_speed.png" alt="MCU speed grah" title="MCU speed dependency" /></p>
+
+<p>There’s an on board <strong>16MHz</strong> ceramic resonator. Since the MCU is expected to work with a coin cell battery voltage of about 2.7V minimum, the maximum allowed frequency is <strong>10MHz</strong>. Nevertheless, the MCU offers only one option to prescale the external clock source: enabling a configuration fuse that sets a prescale factor of 8. At the top of <code class="language-plaintext highlighter-rouge">main.c</code> there’s a section for fuses configuration.</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define FUSE_BITS_LOW       (FUSE_SUT_CKSEL0 &amp; FUSE_CKDIV8)
+</span></code></pre></div></div>
+
+<p>The bit mask <code class="language-plaintext highlighter-rouge">FUSE_CKDIV8</code> sets the use of the prescaler by 8. Thus, the CPU frequency is set to be <strong>2MHz</strong>. This is also stated in <code class="language-plaintext highlighter-rouge">config.h</code>:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 16MHz ceramic resonator, prescaled by 8</span>
+<span class="cp">#define F_CPU			2000000UL
+</span><span class="c1">// A non-usual baud rate, but it's needed due to the low operating frequency,</span>
+<span class="c1">// so that it may work with no errors</span>
+<span class="cp">#define BAUD 			125000UL
+</span></code></pre></div></div>
+
+<p>As a consequence, the <a href="https://en.wikipedia.org/wiki/Symbol_rate">baud rate</a> for serial communications is forced to be a non-standard rate of <code class="language-plaintext highlighter-rouge">125.000</code> bauds. Lower values provoke slower communication rates and generate a slight flickering on the display every second. A valid standard baud rate is <code class="language-plaintext highlighter-rouge">19.200</code>, although the flickering effect is notorious.</p>
+
+<p>I’ve been able to use the <code class="language-plaintext highlighter-rouge">125.000</code> baud rate using off-the-shelf usb to serial adapters and <a href="https://www.putty.org/">PuTTY</a> as virtual COM port under windows. No problems whatsoever. On the other hand, I’ve not been able to use PuTTY under Linux with non-standard baud rates. I also tried <a href="https://linux.die.net/man/1/minicom">minicom</a>, but no success.</p>
+
+<p>Lower CPU frequencies is also advantageous: it presents lower power consumption, although it takes more time to execute tasks and go to sleep.</p>
+
+<p><img src="/nixie_clock/assets/img/mcu_current.png" alt="MCU power consumption" title="MCU power consumption" /></p>
+
+<p>Further testing might be needed in order to determine the exact power consumption of the MCU and a more accurate estimate of the coin cell battery life.</p>
 </div>
             <div style="clear:both;">
               <p class="text-center">

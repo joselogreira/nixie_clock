@@ -29,8 +29,8 @@
 #define F_CPU			2000000UL
 // A non-usual baud rate, but it's needed due to the low operating frequency,
 // so that it may work with no errors
-#define BAUD 			125000UL
-//#define BAUD 			19200UL
+//#define BAUD 			125000UL
+#define BAUD 			19200UL
 
 // GENERIC BOOLEAN MACROS
 #define TRUE		0x01
@@ -87,6 +87,9 @@
 #define INC_MIN			0x13
 #define INC_SEC			0x14
 
+// NULL pointer
+#define NULL 			((void *)0)
+
 // DISPLAY STATES:
 // Its advisable to declare them as a limited-range type of variable, to 
 // explicitly make sure that all states are different and no unknown 
@@ -112,9 +115,6 @@ typedef enum {
 ******************** E X T E R N A L   V A R I A B L E S **********************
 ******************************************************************************/
 
-//extern display_s display;
-//extern uint16_t cnt;
-//extern volatile uint8_t sleep_mode;
 extern uint8_t system_reset;
 extern volatile uint8_t loop;
 

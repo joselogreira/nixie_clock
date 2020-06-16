@@ -22,6 +22,7 @@
 
 // Button time counts: These macros determine the time it takes for 
 // different flags within btnXYZ structure to be set (in milliseconds)
+#define BTN_DTCT_TIME   7		// Detect time to assume the button is pressed
 #define BTN_LOCK_TIME	30		// lock time after button released
 #define BTN_DLY1_TIME	300		// time for delay 1
 #define BTN_DLY2_TIME	65		// time for delay 2
@@ -78,59 +79,57 @@ void set_digit(uint8_t n)
 */
 void buttons_check(btn_s *btn)
 {
-	if (btn->query) {
+	switch(btn->state){
 
-		switch(btn->state){
+		case BTN_IDLE:
+			if(!(btn->check)()) btn->count++;
+			else if(btn->count > 0) btn->count--;
 
-			case BTN_IDLE:
-				if(!(btn->check)()) btn->count++;
-				else if(btn->count > 0) btn->count--;
+			if(btn->count == BTN_DTCT_TIME){
+				btn->action = TRUE;
+				btn->lock = TRUE;
+				btn->state = BTN_PUSHED;
+				btn->count = 0;
+				buzzer_set(ENABLE);
+			} else if(btn->count == 0){
+				btn->action = FALSE;
+				btn->lock = FALSE;
+				btn->query = FALSE;
+			}
+			break;
 
-				if(btn->count == 7){
-					btn->action = TRUE;
-					btn->lock = TRUE;
-					btn->state = BTN_PUSHED;
-					btn->count = 0;
-					buzzer_set(ENABLE);
-				} else if(btn->count == 0){
-					btn->action = FALSE;
-					btn->lock = FALSE;
-					btn->query = FALSE;
-				}
-				break;
+		case BTN_PUSHED:
+			if(!(btn->check)()){
+				btn->count++;	
+			} else {
+				btn->count = 0;
+				btn->state = BTN_RELEASED;
+			}
+			if(btn->count == BTN_BEEP_TIME) buzzer_set(DISABLE);
+			if(btn->count == BTN_DLY1_TIME) btn->delay1 = TRUE;
+			if((btn->delay1) && (!(btn->count % BTN_DLY2_TIME))) btn->delay2 = TRUE;
+			if(btn->count >= BTN_DLY3_TIME) btn->delay3 = TRUE;
+			break;
 
-			case BTN_PUSHED:
-				if(!(btn->check)()){
-					btn->count++;	
-				} else {
-					btn->count = 0;
-					btn->state = BTN_RELEASED;
-				}
-				if(btn->count == BTN_BEEP_TIME) buzzer_set(DISABLE);
-				if(btn->count == BTN_DLY1_TIME) btn->delay1 = TRUE;
-				if((btn->delay1) && (!(btn->count % BTN_DLY2_TIME))) btn->delay2 = TRUE;
-				if(btn->count >= BTN_DLY3_TIME) btn->delay3 = TRUE;
-				break;
-
-			case BTN_RELEASED:
-				if((btn->check)())
-					btn->count++;
-				if(btn->count == BTN_LOCK_TIME){
-					btn->query = FALSE;
-					btn->action = FALSE;
-					btn->lock = FALSE;
-					btn->state = BTN_IDLE;
-					btn->count = 0;
-					btn->delay1 = FALSE;
-					btn->delay2 = FALSE;
-					btn->delay3 = FALSE;
-					buzzer_set(DISABLE);
-				}
-				break;
-			default:
-				break;
-		}
+		case BTN_RELEASED:
+			if((btn->check)())
+				btn->count++;
+			if(btn->count == BTN_LOCK_TIME){
+				btn->query = FALSE;
+				btn->action = FALSE;
+				btn->lock = FALSE;
+				btn->state = BTN_IDLE;
+				btn->count = 0;
+				btn->delay1 = FALSE;
+				btn->delay2 = FALSE;
+				btn->delay3 = FALSE;
+				buzzer_set(DISABLE);
+			}
+			break;
+		default:
+			break;
 	}
+	
 }
 
 /*===========================================================================*/

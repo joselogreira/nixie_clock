@@ -15,19 +15,19 @@
 <meta name="generator" content="Jekyll v3.8.7" />
 <meta property="og:title" content="Overall Structure" />
 <meta property="og:locale" content="en_US" />
-<meta name="description" content="Overall Structure" />
-<meta property="og:description" content="Overall Structure" />
-<link rel="canonical" href="http://localhost:5000/nixie_clock/docs/structure/" />
-<meta property="og:url" content="http://localhost:5000/nixie_clock/docs/structure/" />
+<meta name="description" content="I’ll start describing the core functionality and then describing some of the details. Let’s see the main() function." />
+<meta property="og:description" content="I’ll start describing the core functionality and then describing some of the details. Let’s see the main() function." />
+<link rel="canonical" href="http://localhost:4000/nixie_clock/docs/structure/" />
+<meta property="og:url" content="http://localhost:4000/nixie_clock/docs/structure/" />
 <meta property="og:site_name" content="Nixie Tube Clock Documentation" />
 <meta property="og:type" content="article" />
-<meta property="article:published_time" content="2020-06-11T13:55:35-05:00" />
+<meta property="article:published_time" content="2020-06-16T13:30:36-05:00" />
 <script type="application/ld+json">
-{"headline":"Overall Structure","dateModified":"2020-06-11T13:55:35-05:00","datePublished":"2020-06-11T13:55:35-05:00","@type":"WebPage","url":"http://localhost:5000/nixie_clock/docs/structure/","description":"Overall Structure","@context":"https://schema.org"}</script>
+{"datePublished":"2020-06-16T13:30:36-05:00","@type":"WebPage","dateModified":"2020-06-16T13:30:36-05:00","url":"http://localhost:4000/nixie_clock/docs/structure/","description":"I’ll start describing the core functionality and then describing some of the details. Let’s see the main() function.","headline":"Overall Structure","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
-    <link rel="alternate" type="application/rss+xml" title="Nixie Tube Clock Documentation" href="http://localhost:5000/nixie_clock/feed.xml" />
+    <link rel="alternate" type="application/rss+xml" title="Nixie Tube Clock Documentation" href="http://localhost:4000/nixie_clock/feed.xml" />
 </head>
 
 
@@ -153,7 +153,246 @@
 
         <div class="col-md-8">
             <h1>Overall Structure</h1>
-            <div id="markdown-content-container"><h2 id="overall-structure">Overall Structure</h2>
+            <div id="markdown-content-container"><p>I’ll start describing the core functionality and then describing some of the details. Let’s see the <code class="language-plaintext highlighter-rouge">main()</code> function.</p>
+
+<h3 id="main-loop">Main loop</h3>
+
+<p>It’s best to first describe the system from an abstract perspective, instead of start describing the codebase line by line.</p>
+
+<p>&lt; Video featuring functionality &gt;</p>
+
+<p>The system functions are based on the display state, that is, on what’s actually being displayed. Of course, each tube has limited amount of characters (namely, 0 to 9), so in order to display different information, the RGB LEDs come in handy to help understan what’s actually being displayed. According to the state, the buttons have different behavior. These system states are:</p>
+
+<ul>
+  <li><em>Display time:</em> Shows the actual time of the day. This is the default system state</li>
+  <li><em>Display menu:</em> Shows the configuration menu for all options of the clock</li>
+  <li><em>Set time:</em> Changes the actual minutes and hours</li>
+  <li><em>Set hour mode:</em> Toggles between 12h and 24h</li>
+  <li><em>Set alarm:</em> Changes the alarm time</li>
+  <li><em>Set alarm active:</em> Enables/Disables the alarm</li>
+  <li><em>Set alarm theme:</em> Changes the alarm song theme</li>
+  <li><em>Alarm triggered:</em> The alarm event is triggered. Alarm song is playing.</li>
+  <li><em>Set transitions:</em> Clock includes animations. These are configures in this state.</li>
+</ul>
+
+<p>Some of these states include sub-states to implement some specific behavior or animation, or even to perform a visual test on all the tubes. They will be covered in their respective section.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">main()</code> function includes an infinite loop in the form of a <code class="language-plaintext highlighter-rouge">switch() case:</code> structure. Each display state lies within one of the <code class="language-plaintext highlighter-rouge">case</code> statements in the form of a function call. When the <em>Display time</em> state (just as example) is to be displayed (that is, active), the program execution jumps to the <em>Display time</em> function, and remains inside the function for as long as the clock displays the time. Once the user switches to some other state, the function call returns and changes to the appropiate new function call. This is shown in the image below.</p>
+
+<p>&lt; img. Typical program flow &gt;</p>
+
+<p>This systems is event-based, meaning that program execution is determined by one of two things:</p>
+<ul>
+  <li><em>User input</em> in the form of buttons pushed.</li>
+  <li><em>Software events</em> in the form of timers or counters that determine a certain action or behavior.
+This model implies a few important things:</li>
+  <li>
+    <p>Whatever the current system state is, the MCU must constantly check if events have happened, and be flexible enough to break the current program flow and <em>“switch context”</em> to a different system state. <strong>NOTE:</strong> This situation demands some code repetition between all system states to handle events. Although it is possible to avoid code repetition, the resulting code is harder to understand and maintain. Further details will be given below.</p>
+  </li>
+  <li>Many of the events require a time base, thus, a <strong>1ms</strong> period timebase is chosen, and configured in one of the ISRs.</li>
+</ul>
+
+<h3 id="system-states-timed-loop">System states’ timed loop</h3>
+
+<p>Inside of every system state function, there’s an infinite loop inside of which the actions to be performed are synchronized with timers, external events or internal counters. Almost all system states have the same structure, with the exception being <code class="language-plaintext highlighter-rouge">SYSTEM_SLEEP</code>, <code class="language-plaintext highlighter-rouge">SYSTEM_RESET</code> and <code class="language-plaintext highlighter-rouge">PRODUCTION_TEST</code>.</p>
+
+<p>The general structure follows the pattern below:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">system_state_handler</span><span class="p">(</span><span class="n">state_t</span> <span class="o">*</span><span class="n">state</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="c1">// initialize variables</span>
+
+	<span class="cm">/* INFINITE LOOP */</span>
+	<span class="k">while</span><span class="p">(</span><span class="n">TRUE</span><span class="p">){</span>
+
+		<span class="cm">/*
+		*	DISPLAY TRANSITIOS
+		*	Animations and transitions depend on the systeme state
+		*/</span>
+		
+		<span class="cm">/* 
+		* BUTTONS check: Buttons are detected using an ISR which sets btnXYZ
+	    * structure flags. Once set, the rest of the detection and debounce routine is
+	    * handled within buttons_check(), based on the 1ms execution period of
+	    * the main infinite loop
+		*/</span>
+		<span class="k">if</span><span class="p">(</span><span class="n">btnX</span><span class="p">.</span><span class="n">query</span><span class="p">)</span> <span class="n">buttons_check</span><span class="p">(</span><span class="o">&amp;</span><span class="n">btnX</span><span class="p">);</span>
+	    <span class="k">if</span><span class="p">(</span><span class="n">btnY</span><span class="p">.</span><span class="n">query</span><span class="p">)</span> <span class="n">buttons_check</span><span class="p">(</span><span class="o">&amp;</span><span class="n">btnY</span><span class="p">);</span>
+	    <span class="k">if</span><span class="p">(</span><span class="n">btnZ</span><span class="p">.</span><span class="n">query</span><span class="p">)</span> <span class="n">buttons_check</span><span class="p">(</span><span class="o">&amp;</span><span class="n">btnZ</span><span class="p">);</span>
+
+	    <span class="cm">/*
+	    * BUTTONS actions:
+		* - executed according to the buttons state flags
+		*
+		* If X pressed, then ...
+		* If Y pressed, then ...
+		* If Z pressed, then ...
+		*/</span>
+
+		<span class="cm">/*
+		* 	GENERAL FUNCTION COUNTER
+		*/</span>
+		<span class="n">count</span><span class="o">++</span><span class="p">;</span>
+		<span class="c1">// some code to handle counter</span>
+
+		<span class="cm">/* 
+		* LOOP DELAY AND INTERRUPT ENABLE TIME --------------------------------
+		* All interrupts are served within the sei()-cli() block. This is to 
+		* avoid the extra care required for arbitrarily triggered ISRs and the 
+		* use of atomic operations. "loop" flag is set every 1ms by a timer
+		* whose ISR is enabled to produce interrupts every 1ms
+		*/</span>
+		<span class="n">sei</span><span class="p">();</span>
+		<span class="c1">// Wait for the next ms.</span>
+		<span class="k">while</span><span class="p">(</span><span class="o">!</span><span class="n">loop</span><span class="p">);</span>
+		<span class="n">loop</span> <span class="o">=</span> <span class="n">FALSE</span><span class="p">;</span>
+		<span class="n">cli</span><span class="p">();</span>
+		<span class="c1">// If system state changed, exit fuction.</span>
+		<span class="k">if</span><span class="p">(</span><span class="o">*</span><span class="n">state</span> <span class="o">!=</span> <span class="n">SET_ALARM_ACTIVE</span><span class="p">)</span>
+			<span class="k">break</span><span class="p">;</span>
+
+	<span class="p">}</span>	<span class="cm">/* END INFINITE LOOP */</span>
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>Key points:</p>
+
+<ul>
+  <li><strong>ISRs are NOT enabled all the time</strong>. They’re only enabled once the whole loop tasks get executed. Loop period is 1ms, and all the loop tasks are executed in much less than 1ms. Thus, ISRs are enabled for all the remaining time.</li>
+  <li>The External Interrupt for the buttons sets the <code class="language-plaintext highlighter-rouge">btnXYZ.query</code> flag. Once set, it means that the <code class="language-plaintext highlighter-rouge">buttons_check()</code> routine gets executed. But this is NOT a blocking routine, instead, buttons’ states are evaluated after multiple runs of the same routine over the same button. More explanations <a href="/nixie_clock/docs/debounce/index.html">here</a>.</li>
+  <li>Most system states require some sort of internal counter to synchronize actions. Limit counter values are handled individually in every system state.</li>
+</ul>
+
+<h3 id="global-structures">Global structures</h3>
+
+<p>To better organize data across all modules, a few global data structures are created related to: time data, alarm data, display data and buttons data. Data structures are first prototyped using <code class="language-plaintext highlighter-rouge">typedef</code> and exposed globally using <code class="language-plaintext highlighter-rouge">extern</code> in the respective <code class="language-plaintext highlighter-rouge">.h</code> header file, and defined in the respective <code class="language-plaintext highlighter-rouge">.c</code> file.</p>
+
+<blockquote>
+  <p><strong>NOTE:</strong> no bit fields are used.</p>
+</blockquote>
+
+<ul>
+  <li><strong><em>Time data</em></strong>: Includes data related to current time, time format, and an important flag that signals whether current time has been updated or not (updates happen every second). Files involved: <code class="language-plaintext highlighter-rouge">menu_time.c</code> and <code class="language-plaintext highlighter-rouge">menu_time.h</code>:</li>
+</ul>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* menu_time.h */</span>
+<span class="k">typedef</span> <span class="k">volatile</span> <span class="k">struct</span> <span class="p">{</span>
+	<span class="kt">uint8_t</span>	<span class="n">sec</span><span class="p">;</span>			<span class="c1">// seconds</span>
+	<span class="kt">uint8_t</span> <span class="n">min</span><span class="p">;</span>			<span class="c1">// minutes</span>
+	<span class="kt">uint8_t</span> <span class="n">hour</span><span class="p">;</span>			<span class="c1">// hours</span>
+	<span class="kt">uint8_t</span> <span class="n">s_units</span><span class="p">;</span>		<span class="c1">// BCD seconds' units</span>
+	<span class="kt">uint8_t</span> <span class="n">s_tens</span><span class="p">;</span>			<span class="c1">// BCD seconds' tens</span>
+	<span class="kt">uint8_t</span> <span class="n">m_units</span><span class="p">;</span>		<span class="c1">// BCD minutes' units</span>
+	<span class="kt">uint8_t</span> <span class="n">m_tens</span><span class="p">;</span>			<span class="c1">// BCD minutes' tens</span>
+	<span class="kt">uint8_t</span> <span class="n">h_units</span><span class="p">;</span>		<span class="c1">// BCD hours' units</span>
+	<span class="kt">uint8_t</span> <span class="n">h_tens</span><span class="p">;</span>			<span class="c1">// BCD hours' tens</span>
+	<span class="kt">uint8_t</span> <span class="n">update</span><span class="p">;</span>			<span class="c1">// flag. 1Hz update?</span>
+	<span class="kt">uint8_t</span> <span class="n">hour_mode</span><span class="p">;</span>		<span class="c1">// 12/24h </span>
+	<span class="kt">uint8_t</span> <span class="n">day_period</span><span class="p">;</span>		<span class="c1">// AM/PM</span>
+<span class="p">}</span> <span class="n">time_s</span><span class="p">;</span>
+
+<span class="k">extern</span> <span class="n">time_s</span> <span class="n">time</span><span class="p">;</span>
+
+<span class="cm">/* menu_time.c */</span>
+<span class="n">time_s</span> <span class="n">time</span><span class="p">;</span>
+</code></pre></div></div>
+
+<ul>
+  <li><strong><em>Alarm data</em></strong>: Includes data related to alarm configuration, and an important flag that signals whether alarm is enabled or not. Files involved: <code class="language-plaintext highlighter-rouge">menu_alarm.c</code> and <code class="language-plaintext highlighter-rouge">menu_alarm.h</code>:</li>
+</ul>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* menu_alarm.h */</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+	<span class="kt">uint8_t</span>	<span class="n">sec</span><span class="p">;</span>			<span class="c1">// seconds</span>
+	<span class="kt">uint8_t</span> <span class="n">min</span><span class="p">;</span>			<span class="c1">// minutes</span>
+	<span class="kt">uint8_t</span> <span class="n">hour</span><span class="p">;</span>			<span class="c1">// hours</span>
+	<span class="kt">uint8_t</span> <span class="n">s_units</span><span class="p">;</span>		<span class="c1">// BCD seconds' units</span>
+	<span class="kt">uint8_t</span> <span class="n">s_tens</span><span class="p">;</span>			<span class="c1">// BCD seconds' tens</span>
+	<span class="kt">uint8_t</span> <span class="n">m_units</span><span class="p">;</span>		<span class="c1">// BCD minutes' units</span>
+	<span class="kt">uint8_t</span> <span class="n">m_tens</span><span class="p">;</span>			<span class="c1">// BCD minutes' tens</span>
+	<span class="kt">uint8_t</span> <span class="n">h_units</span><span class="p">;</span>		<span class="c1">// BCD hours' units</span>
+	<span class="kt">uint8_t</span> <span class="n">h_tens</span><span class="p">;</span>			<span class="c1">// BCD hours' tens</span>
+	<span class="kt">uint8_t</span> <span class="n">hour_mode</span><span class="p">;</span>		<span class="c1">// 12/24h </span>
+	<span class="kt">uint8_t</span> <span class="n">day_period</span><span class="p">;</span>		<span class="c1">// AM/PM</span>
+	<span class="kt">uint8_t</span> <span class="n">active</span><span class="p">;</span>			<span class="c1">// flag. Alarm ON?</span>
+	<span class="k">volatile</span> <span class="kt">uint8_t</span> <span class="n">triggered</span><span class="p">;</span>	<span class="c1">// flag. Alarm MATCH?</span>
+	<span class="kt">uint8_t</span> <span class="n">theme</span><span class="p">;</span>			<span class="c1">// Alarm melody</span>
+<span class="p">}</span> <span class="n">alarm_s</span><span class="p">;</span>
+
+<span class="k">extern</span> <span class="n">alarm_s</span> <span class="n">alarm</span><span class="p">;</span>
+
+<span class="cm">/* menu_alarm.c */</span>
+<span class="n">alarm_s</span> <span class="n">alarm</span><span class="p">;</span>
+</code></pre></div></div>
+
+<ul>
+  <li><strong><em>Display data</em></strong>: Includes data related to current display contents, fading level and display mode (used to differentiate transitions or animations). Files involved: <code class="language-plaintext highlighter-rouge">timers.c</code> and <code class="language-plaintext highlighter-rouge">timers.h</code>:</li>
+</ul>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* timers.h */</span>
+<span class="k">typedef</span> <span class="k">volatile</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="kt">uint8_t</span> <span class="n">mode</span><span class="p">;</span>
+    <span class="kt">uint8_t</span> <span class="n">d1</span><span class="p">;</span>
+    <span class="kt">uint8_t</span> <span class="n">d2</span><span class="p">;</span>
+    <span class="kt">uint8_t</span> <span class="n">d3</span><span class="p">;</span>
+    <span class="kt">uint8_t</span> <span class="n">d4</span><span class="p">;</span>
+    <span class="kt">uint8_t</span> <span class="n">set</span><span class="p">;</span>
+    <span class="kt">uint8_t</span> <span class="n">fade_level</span><span class="p">[</span><span class="mi">4</span><span class="p">];</span>
+<span class="p">}</span> <span class="n">display_s</span><span class="p">;</span>
+
+<span class="k">extern</span> <span class="n">display_s</span> <span class="n">display</span><span class="p">;</span>
+
+<span class="cm">/* timers.c */</span>
+<span class="n">display_s</span> <span class="n">display</span><span class="p">;</span>
+</code></pre></div></div>
+
+<ul>
+  <li><strong><em>Buttons data</em></strong>: Includes data related to current buttons state. Operations upon this structure occur only during the buttons debounce routine, and its state gets polled to check for buttons activity. Further explanation on debounce routine can be found <a href="/nixie_clock/docs/debounce/index.html">here</a>. Files involved: <code class="language-plaintext highlighter-rouge">external_interrupt.c</code> and <code class="language-plaintext highlighter-rouge">external_interrupt.h</code>:</li>
+</ul>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/* external_interrupt.h */</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+	<span class="k">volatile</span> <span class="kt">uint8_t</span> <span class="n">query</span><span class="p">;</span>	<span class="c1">// flag; query button state</span>
+	<span class="kt">uint8_t</span> <span class="n">action</span><span class="p">;</span>			<span class="c1">// flag; button action activated</span>
+	<span class="kt">uint8_t</span> <span class="n">lock</span><span class="p">;</span>			<span class="c1">// flag; button locked</span>
+	<span class="kt">uint8_t</span> <span class="n">state</span><span class="p">;</span>			<span class="c1">// button state: IDLE, PUSHED, RELEASED</span>
+	<span class="kt">uint16_t</span> <span class="n">count</span><span class="p">;</span>			<span class="c1">// time counter</span>
+	<span class="kt">uint8_t</span> <span class="n">delay1</span><span class="p">;</span>			<span class="c1">// flag; delay 1 elapsed</span>
+	<span class="kt">uint8_t</span> <span class="n">delay2</span><span class="p">;</span>			<span class="c1">// flag; delay 2 elapsed</span>
+	<span class="kt">uint8_t</span> <span class="n">delay3</span><span class="p">;</span>			<span class="c1">// flag; delay 3 elapsed</span>
+	<span class="kt">uint8_t</span> <span class="p">(</span><span class="o">*</span><span class="n">check</span><span class="p">)();</span>		<span class="c1">// function pointer to a state check handler</span>
+<span class="p">}</span> <span class="n">btn_s</span><span class="p">;</span>
+
+<span class="k">extern</span> <span class="n">btn_s</span> <span class="n">btnX</span><span class="p">,</span> <span class="n">btnY</span><span class="p">,</span> <span class="n">btnZ</span><span class="p">;</span>
+
+<span class="cm">/* external_interrupt.c */</span>
+<span class="n">btn_s</span> <span class="n">btnX</span><span class="p">,</span> <span class="n">btnY</span><span class="p">,</span> <span class="n">btnZ</span><span class="p">;;</span>
+</code></pre></div></div>
+
+<h3 id="macros-and-constants">Macros and constants</h3>
+
+<p>Many modules require their own set of private macros (either for configuration or for constants definition). Some others require to expose their macros to other modules. The private macros are defined in the respective modules’ <code class="language-plaintext highlighter-rouge">.c</code> file, and those shared with other modues are declared in the <code class="language-plaintext highlighter-rouge">.h</code> file. Appart from those, there’re some “generic” macros that are declared in the <code class="language-plaintext highlighter-rouge">config.h</code> file, which is included in most of the modules.</p>
+
+<p>This file also includes a couple of <code class="language-plaintext highlighter-rouge">extern</code> variables declared in <code class="language-plaintext highlighter-rouge">main.c</code> required to be accessible by other modules.</p>
+
+<h3 id="interrupt-service-routines">Interrupt Service Routines</h3>
+
+<p>All the ISR handler functions are defined at the end of <code class="language-plaintext highlighter-rouge">main.c</code>. These are:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">ISR(TIMER2_OVF_vect){}</code>: Used as Real Time Counter. It’s an asynchronous peripheral that has its own clock source from the 32,768KHz external crystal.</li>
+  <li><code class="language-plaintext highlighter-rouge">ISR(TIMER3_COMPA_vect){}</code>: Used as general purpose timer. It has a 1ms period and is responsible for:
+    <ul>
+      <li>Nixie tubes <a href="/nixie_clock/docs/multiplexing/index.html">multiplexing</a></li>
+      <li>System states’ loop timed execution.</li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">ISR(PCINT1_vect){}</code>: Pin change interrupt. Used to detect the buttons press.</li>
+  <li><code class="language-plaintext highlighter-rouge">ISR(PCINT2_vect){}</code>: Pin change interrupt. Used to detect the external power removal or connection.</li>
+</ul>
+
+<p>Further information can be found <a href="/nixie_clock/docs/isr/index.html">here</a>.</p>
 </div>
             <div style="clear:both;">
               <p class="text-center">

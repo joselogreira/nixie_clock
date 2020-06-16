@@ -267,7 +267,7 @@ static const char bcd_to_ascii[] PROGMEM = {'0','1','2','3','4','5','6','7','8',
 -----------------------------------------------------------------------------*/
 /*
 * TIMER 2 interrupts are Asynchronous!, meaning that the peripheral uses the 
-* external 32.765KHz watch crystal as clock source. Interrupts are generated 
+* external 32.768KHz watch crystal as clock source. Interrupts are generated 
 * once every second. 
 * - time structure is updated in every execution
 * - alarm is checked to see if it matches
@@ -364,7 +364,7 @@ ISR(TIMER3_COMPA_vect){
     static uint16_t cnt = 0;        // general purpose counter
 
     // execute main loop every 1ms.
-    loop = TRUE;    
+    loop = TRUE;
 
     if(system_state != PRODUCTION_TEST){
         // multiplex tubes' anode every 5ms. Independent of fading level

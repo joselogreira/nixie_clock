@@ -54,6 +54,7 @@ void go_to_sleep(volatile state_t *state, volatile uint8_t mode)
 	uint8_t sys = FALSE;
 
 	while(TRUE){
+
 		switch(step){
 
 			case DISABLE_PERIPHERALS:
@@ -105,7 +106,6 @@ void go_to_sleep(volatile state_t *state, volatile uint8_t mode)
 				peripherals_enable();
 				uart_send_string("\n\rWhat's Up!");
 				// check system voltages
-				//_delay_ms(1500);
 				_delay_ms(2000);
 				if(!adc_voltages_test()){
 				    system_reset = TRUE;
@@ -120,6 +120,7 @@ void go_to_sleep(volatile state_t *state, volatile uint8_t mode)
 			default:
 				break;
 		}
+
 		if(sys) break;
 	}
 }

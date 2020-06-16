@@ -18,6 +18,7 @@
 #include <avr/pgmspace.h>
 #include <util/delay.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 /******************************************************************************
 ******************* C O N S T A N T   D E F I N I T I O N S *******************
@@ -363,11 +364,15 @@ static const note_s usa_anthem[] PROGMEM = {
 	{N_B7, QUARTER_NOTE},
 	{N_G7, QUARTER_NOTE},	
 };
+
 /******************************************************************************
 ******************* F U N C T I O N   D E F I N I T I O N S *******************
 ******************************************************************************/
 
 static uint16_t note_duration(uint16_t counts, uint8_t tempo);
+static uint8_t theme_tempo(uint8_t theme);
+static const note_s * theme_pointer(uint8_t theme);
+static size_t theme_size(uint8_t theme);
 
 /*===========================================================================*/
 /*
@@ -405,9 +410,10 @@ uint8_t buzzer_music(uint8_t theme, uint8_t state)
 	static uint16_t count = 0;
 	static uint8_t n = 0;
 	static uint8_t out = FALSE;
-	static uint16_t count_vect[100];
-	static uint8_t size;
-	static const note_s *p; 
+	//static uint16_t count_vect[100];
+	static size_t size;
+	static const note_s *theme_p = NULL;
+	static uint16_t *duration_p = NULL; 
 	
 	/* 
 	* Different melodies have different tempo. Thus, the time duration of each
@@ -415,68 +421,41 @@ uint8_t buzzer_music(uint8_t theme, uint8_t state)
 	* This calculation is performed only once when initializing this function.
 	*/
 	if(state){
+
 		if(intro){
 			intro = FALSE;
 			count = 0;
 			n = 0;
 			out = FALSE;
 			uint8_t tempo = 0;
-			// point to the proper melody and calculate its size
-			switch(theme){
-				case MAJOR_SCALE: 	 
-					p = major_scale;
-					tempo = 200;
-					size = sizeof(major_scale)/sizeof(note_s);
-					break;
-				case STAR_WARS:
-					p = star_wars_theme;
-					tempo = 108;
-					size = sizeof(star_wars_theme)/sizeof(note_s);	
-					break;
-				case IMPERIAL_MARCH:
-					p = imperial_march_theme;
-					tempo = 108;
-					size = sizeof(imperial_march_theme)/sizeof(note_s);
-					break;
-				case SUPER_MARIO:
-					p = super_mario_theme;
-					tempo = 200;
-					size = sizeof(super_mario_theme)/sizeof(note_s);
-					break;
-				case SIMPLE_ALARM:
-					p = simple_alarm;
-					tempo = 200;
-					size = sizeof(simple_alarm)/sizeof(note_s);
-					break;
-				case DIOMEDES:
-					p = diomedes;
-					tempo = 150;
-					size = sizeof(diomedes)/sizeof(note_s);
-					break;
-				case USA_ANTHEM:
-					p = usa_anthem;
-					tempo = 90;
-					size = sizeof(usa_anthem)/sizeof(note_s);
-				default: break;
-			}
+			
+			tempo = theme_tempo(theme);
+			size = theme_size(theme);
+			theme_p = theme_pointer(theme);
+			
+			duration_p = (uint16_t *)calloc(size, sizeof(uint16_t));
+			
 			// calculate proper notes' duration and store the result in vector
 			for(uint8_t i = 0; i < size; i++)
-				count_vect[i] = note_duration(pgm_read_word(&p[i].duration), tempo);
+				duration_p[i] = note_duration(pgm_read_word(&theme_p[i].duration), tempo);
 		}
 
 		// notes' transitions: based on "count" counter and the values stored in 
-		// count_vect[] vector. If a note finishes playing, jump to the next one.
-		if(count >= count_vect[n]){
+		// duration_p[] vector. If a note finishes playing, jump to the next one.
+		if(count >= duration_p[n]){
 			n++;
-			if(pgm_read_word(&p[n].note) != N_SIL)
-				timer_buzzer_set(ENABLE, pgm_read_word(&p[n].note));
+			if(pgm_read_word(&theme_p[n].note) != N_SIL)
+				timer_buzzer_set(ENABLE, pgm_read_word(&theme_p[n].note));
 			else
-				timer_buzzer_set(DISABLE, pgm_read_word(&p[n].note));
+				timer_buzzer_set(DISABLE, pgm_read_word(&theme_p[n].note));
 			count = 0;
 		}
 		// If melody finishes playing, output TRUE
 		if(n >= size){
 			timer_buzzer_set(DISABLE, N_C8);
+			free((void *)duration_p);
+			theme_p = NULL;
+			duration_p = NULL;
 			intro = TRUE;
 			out = TRUE;
 		}
@@ -486,6 +465,10 @@ uint8_t buzzer_music(uint8_t theme, uint8_t state)
 		// If "state" flag is disabled, stop playing melody and disable buzzer
 		intro = TRUE;
 		timer_buzzer_set(DISABLE, N_SIL);	
+		if(duration_p != NULL){
+			free((void *)duration_p);
+			duration_p = NULL;
+		}
 	}	
 	
 	return out;
@@ -496,12 +479,62 @@ uint8_t buzzer_music(uint8_t theme, uint8_t state)
 -----------------------------------------------------------------------------*/
 
 /*===========================================================================*/
+static uint8_t theme_tempo(uint8_t theme)
+{
+	uint8_t tempo;
+
+	if(theme == MAJOR_SCALE) 			tempo = 200;
+	else if(theme == STAR_WARS) 		tempo = 108;
+	else if(theme == IMPERIAL_MARCH) 	tempo = 108;
+	else if(theme == SUPER_MARIO) 		tempo = 200;
+	else if(theme == SIMPLE_ALARM) 		tempo = 200;
+	else if(theme == DIOMEDES) 			tempo = 150;
+	else if(theme == USA_ANTHEM) 		tempo = 90;
+	else tempo = 100;
+
+	return tempo;
+}
+
+/*===========================================================================*/
+static const note_s * theme_pointer(uint8_t theme)
+{
+	const note_s *p;
+
+	if(theme == MAJOR_SCALE) 			p = major_scale;
+	else if(theme == STAR_WARS) 		p = star_wars_theme;
+	else if(theme == IMPERIAL_MARCH) 	p = imperial_march_theme;
+	else if(theme == SUPER_MARIO) 		p = super_mario_theme;
+	else if(theme == SIMPLE_ALARM) 		p = simple_alarm;
+	else if(theme == DIOMEDES) 			p = diomedes;
+	else if(theme == USA_ANTHEM) 		p = usa_anthem;
+	else p = major_scale;
+
+	return p;
+}
+
+/*===========================================================================*/
+static size_t theme_size(uint8_t theme)
+{
+	uint8_t size;
+
+	if(theme == MAJOR_SCALE) 			size = sizeof(major_scale)/sizeof(note_s);
+	else if(theme == STAR_WARS) 		size = sizeof(star_wars_theme)/sizeof(note_s);
+	else if(theme == IMPERIAL_MARCH) 	size = sizeof(imperial_march_theme)/sizeof(note_s);
+	else if(theme == SUPER_MARIO) 		size = sizeof(super_mario_theme)/sizeof(note_s);
+	else if(theme == SIMPLE_ALARM) 		size = sizeof(simple_alarm)/sizeof(note_s);
+	else if(theme == DIOMEDES) 			size = sizeof(diomedes)/sizeof(note_s);
+	else if(theme == USA_ANTHEM) 		size = sizeof(usa_anthem)/sizeof(note_s);
+	else size = sizeof(major_scale)/sizeof(note_s);
+
+	return size;
+}
+
+/*===========================================================================*/
 /*
 *	Base tempo is 100 (100 bits per minute). 
 */
 static uint16_t note_duration(uint16_t counts, uint8_t tempo)
 {
-
 	float f_tempo = (float) tempo;
 	float f_counts = (float) counts;
 	float x = (100.0 / f_tempo) * f_counts;
