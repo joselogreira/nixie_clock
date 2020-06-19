@@ -12,6 +12,7 @@
 ******************************************************************************/
 
 #include "external_interrupt.h"
+#include "config.h"
 
 #include <avr/io.h>
 #include <stdint.h>

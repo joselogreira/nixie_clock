@@ -16,14 +16,7 @@
 *******************	I N C L U D E   D E P E N D E N C I E S	*******************
 ******************************************************************************/
 
-#include "adc.h"
-#include "buzzer.h"
 #include "config.h"
-#include "external_interrupt.h"
-#include "menu_alarm.h"
-#include "timers.h"
-#include "uart.h"
-#include "util.h"
 
 #include <stdint.h>
 

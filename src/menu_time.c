@@ -14,6 +14,13 @@
 ******************************************************************************/
 
 #include "menu_time.h"
+#include "buzzer.h"
+#include "config.h"
+#include "math.h"
+#include "menu_alarm.h"
+#include "timers.h"
+#include "uart.h"
+#include "util.h"
 
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>

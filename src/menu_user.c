@@ -14,6 +14,11 @@
 ******************************************************************************/
 
 #include "menu_user.h"
+#include "buzzer.h"
+#include "config.h"
+#include "timers.h"
+#include "uart.h"
+#include "util.h"
 
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>

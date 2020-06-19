@@ -12,6 +12,15 @@
 ******************************************************************************/
 
 #include "init.h"
+#include "adc.h"
+#include "buzzer.h"
+#include "config.h"
+#include "eeprom.h"
+#include "external_interrupt.h"
+#include "menu_alarm.h"
+#include "menu_time.h"
+#include "timers.h"
+#include "uart.h"
 
 #include <avr/io.h>
 #include <stdint.h>

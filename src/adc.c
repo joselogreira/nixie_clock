@@ -14,6 +14,8 @@
 ******************************************************************************/
 
 #include "adc.h"
+#include "config.h"
+#include "uart.h"
 
 #include <avr/io.h>
 #include <avr/pgmspace.h>

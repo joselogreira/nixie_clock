@@ -23,7 +23,7 @@
 ******************* C O N S T A N T   D E F I N I T I O N S *******************
 ******************************************************************************/
 
-#define FIRMWARE_DATE 	"15-NOV-2018"
+#define FIRMWARE_DATE 	"15-JUN-2020"
 
 // 16MHz ceramic resonator, prescaled by 8
 #define F_CPU			2000000UL

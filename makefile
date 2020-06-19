@@ -32,15 +32,21 @@ endif
 MCU 		= atmega324pb
 
 # AVRDude
-AVRDUDE_FLAGS = -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER) -v $(AVRDUDE_FREQ) -F
-AVRDUDE_WRITE_FLASH = -U flash:w:$(OUTDIR)/$(PROGRAM).hex
-AVRDUDE_READ_FLASH = -U flash:r:$(OUTDIR)/$(PROGRAM).hex
-AVRDUDE_READ_EEPROM = -U eeprom:r:$(OUTDIR)/$(PROGRAM).eep
-AVRDUDE_ERASE_CHIP = -e
-#AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(PROGRAM).eep
-AVRDUDE_WRITE_FUSES = lock:w:$(LOCK):m -U efuse:w:$(EFUSE):m -U hfuse:w:$(HFUSE):m -U lfuse:w:$(LFUSE):m
+AVRDUDE_FLAGS = -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER) -v $(AVRDUDE_FREQ)
 SAFEMODE = -u
-# Fuses
+AVRDUDE_ERASE_CHIP = -e
+
+# Flash
+AVRDUDE_WRITE_FLASH = -U flash:w:$(OUTDIR)/$(PROGRAM).hex:i
+AVRDUDE_READ_FLASH = -U flash:r:$(OUTDIR)/$(PROGRAM).hex:i
+
+# EEPROM
+AVRDUDE_READ_EEPROM = -U eeprom:r:$(OUTDIR)/$(PROGRAM).eep:i
+AVRDUDE_WRITE_EEPROM = -U eeprom:w:$(OUTDIR)/$(PROGRAM).eep:i
+
+# Fuses:
+AVRDUDE_WRITE_FUSES = lock:w:$(LOCK):m -U efuse:w:$(EFUSE):m -U hfuse:w:$(HFUSE):m -U lfuse:w:$(LFUSE):m
+AVRDUDE_READ_FUSES = lock:r:-:h -U efuse:r:-:h -U hfuse:r:-:h -U lfuse:r:-:h
 HFUSE := 0x
 LFUSE := 0x
 EFUSE := 0x
@@ -93,13 +99,19 @@ build: $(OUTDIR) $(PROGRAM).hex
 # INTERFACING -----------------------------------------------------------------
 
 program: $(OUTDIR)
-	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)	
+	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH)
+
+program_eeprom: $(OUTDIR)
+	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_EEPROM)	
 
 program_fuses:
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(SAFEMODE) $(AVRDUDE_WRITE_FUSES)
 
 read: $(OUTDIR)
-	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_READ_FLASH) $(AVRDUDE_READ_EEPROM)	
+	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_READ_FLASH)
+
+read_eeprom: $(OUTDIR)
+	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_READ_EEPROM)	
 
 poke:
 	$(AVRDUDE) $(AVRDUDE_FLAGS)

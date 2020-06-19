@@ -14,6 +14,14 @@
 ******************************************************************************/
 
 #include "sleep.h"
+#include "adc.h"
+#include "buzzer.h"
+#include "config.h"
+#include "external_interrupt.h"
+#include "menu_alarm.h"
+#include "timers.h"
+#include "uart.h"
+#include "util.h"
 
 #include <stdint.h>
 #include <avr/sleep.h>		/* Macros for handling spleep routines */

@@ -14,6 +14,15 @@
 ******************************************************************************/
 
 #include "debug.h"
+#include "adc.h"
+#include "buzzer.h"
+#include "config.h"
+#include "eeprom.h"
+#include "external_interrupt.h"
+#include "menu_time.h"
+#include "timers.h"
+#include "uart.h"
+#include "util.h"
 
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>

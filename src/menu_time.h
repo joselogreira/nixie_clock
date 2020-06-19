@@ -16,13 +16,9 @@
 *******************	I N C L U D E   D E P E N D E N C I E S	*******************
 ******************************************************************************/
 
-#include "buzzer.h"
 #include "config.h"
-#include "math.h"
-#include "menu_alarm.h"
-#include "timers.h"
-#include "uart.h"
-#include "util.h"
+
+#include <stdint.h>
 
 /******************************************************************************
 ***************** S T R U C T U R E   D E C L A R A T I O N S *****************

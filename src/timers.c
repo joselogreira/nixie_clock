@@ -12,6 +12,8 @@
 ******************************************************************************/
 
 #include "timers.h"
+#include "buzzer.h"
+#include "config.h"
 
 #include <avr/io.h>
 #include <stdint.h>

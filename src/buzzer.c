@@ -14,6 +14,9 @@
 ******************************************************************************/
 
 #include "buzzer.h"
+#include "config.h"
+#include "timers.h"
+#include "uart.h"
 
 #include <avr/pgmspace.h>
 #include <util/delay.h>

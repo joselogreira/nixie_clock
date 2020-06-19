@@ -12,6 +12,7 @@
 ******************************************************************************/
 
 #include "uart.h"
+#include "config.h"
 
 #include <avr/io.h>
 #include <stdint.h>
