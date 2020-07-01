@@ -10,7 +10,7 @@ I'll start describing the core functionality and then describing some of the det
 
 It's best to first describe the system from an abstract perspective, instead of start describing the codebase line by line.
 
-< Video featuring functionality >
+<iframe width="560" height="315" src="https://www.youtube.com/embed/HfNS7TEvCeo" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 The system functions are based on the display state, that is, on what's actually being displayed. Of course, each tube has limited amount of characters (namely, 0 to 9), so in order to display different information, the RGB LEDs come in handy to help understan what's actually being displayed. According to the state, the buttons have different behavior. These system states are:
 

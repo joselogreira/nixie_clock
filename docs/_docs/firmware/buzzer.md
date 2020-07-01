@@ -6,7 +6,7 @@ permalink: /docs/buzzer/
 
 Although the [piezoelectric buzzer](https://en.wikipedia.org/wiki/Buzzer) used is mechanically design for a resonant frequency of 4KHz, it can also produce tones at a wide range of frequencies. For the song themes implemented, more than 2 octaves were used to play all notes (from A6 to C9).
 
-< video playing songs >
+<iframe width="560" height="315" src="https://www.youtube.com/embed/HfNS7TEvCeo?start=131" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 The mechanism for playng song themes in a non-blocking fashion is described below.
 
