@@ -32,13 +32,6 @@ exclude:
 timezone: America/Bogota
 defaults:
 - scope:
-    path: _posts
-    type: posts
-  values:
-    layout: post
-    sectionid: blog
-
-- scope:
     path: _docs
     type: docs
   values:
@@ -47,10 +40,19 @@ defaults:
     seo:
       type: "WebPage"
 
+- scope:
+    path: _gallery
+    type: gallery
+  values:
+    layout: docs
+    sectionid: gallery
+    seo:
+      type: "WebPage"
+
 collections:
   docs:
     permalink: /:collection/:path/
     output: true
-  posts:
-    permalink: /blog/:year/:month/:day/:title/
+  gallery:
+    permalink: /gallery/
     output: true

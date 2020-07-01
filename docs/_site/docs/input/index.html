@@ -15,15 +15,15 @@
 <meta name="generator" content="Jekyll v3.8.7" />
 <meta property="og:title" content="Input protection" />
 <meta property="og:locale" content="en_US" />
-<meta name="description" content="Documentation of The Nixie Tube Clock developed at Nuvitron and improved over time" />
-<meta property="og:description" content="Documentation of The Nixie Tube Clock developed at Nuvitron and improved over time" />
+<meta name="description" content="PDF schematic" />
+<meta property="og:description" content="PDF schematic" />
 <link rel="canonical" href="http://localhost:4000/nixie_clock/docs/input/" />
 <meta property="og:url" content="http://localhost:4000/nixie_clock/docs/input/" />
 <meta property="og:site_name" content="Nixie Tube Clock Documentation" />
 <meta property="og:type" content="article" />
-<meta property="article:published_time" content="2020-06-16T13:30:36-05:00" />
+<meta property="article:published_time" content="2020-06-30T19:04:04-05:00" />
 <script type="application/ld+json">
-{"datePublished":"2020-06-16T13:30:36-05:00","@type":"WebPage","dateModified":"2020-06-16T13:30:36-05:00","url":"http://localhost:4000/nixie_clock/docs/input/","description":"Documentation of The Nixie Tube Clock developed at Nuvitron and improved over time","headline":"Input protection","@context":"https://schema.org"}</script>
+{"@type":"WebPage","url":"http://localhost:4000/nixie_clock/docs/input/","description":"PDF schematic","headline":"Input protection","dateModified":"2020-06-30T19:04:04-05:00","datePublished":"2020-06-30T19:04:04-05:00","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
@@ -51,7 +51,7 @@
 
                 <li  class="active" ><a href="/nixie_clock/docs/start/">Docs</a></li>
                 
-                <li ><a href="/nixie_clock/blog/2017/05/03/jekyll-doc-theme/">Blog</a></li>
+                <li ><a href="/nixie_clock/gallery/">Gallery</a></li>
 
             </ul>
             <div class="navbar-right">
@@ -153,16 +153,57 @@
 
         <div class="col-md-8">
             <h1>Input protection</h1>
-            <div id="markdown-content-container">
+            <div id="markdown-content-container"><p><strong><a href="/nixie_clock/assets/pdf/nixie_clock_3.pdf" title="Schematic">PDF schematic</a></strong></p>
+
+<p>The circuit is protected against four undesired situations:</p>
+
+<ul>
+  <li><em>Reverse polarity protection</em></li>
+  <li><em>Overvoltage</em></li>
+  <li><em>Undervoltage</em></li>
+  <li><em>Inrush current</em></li>
+</ul>
+
+<p>The image below shows the power input circut section, that implements 3 of these four measures.</p>
+
+<p><img src="/nixie_clock/assets/img/input_circuit.png" alt="Input circuit" title="Input circuit" /></p>
+
+<p>The connector P1 to the left receives power and button signals from a secondary PCB on the back of the clock that includes the 12V plug and three buttons. Both PCBs are connected via a 10-wire ribbon cable.</p>
+
+<ul>
+  <li>
+    <p><strong><em>Reverse polarity protection:</em></strong> This is the simplest. The diode <code class="language-plaintext highlighter-rouge">D1</code> protects against any backward current flow. The drawback is the diode voltage drop (close to 0.5V). If necessary, it can be avoided by using a MOSFET switch like <a href="https://circuitdigest.com/electronic-circuits/reverse-polarity-protection-circuit-diagram">this one</a>. But it wasn’t necessary in this case.</p>
+  </li>
+  <li>
+    <p><strong><em>Overvoltage:</em></strong> <code class="language-plaintext highlighter-rouge">D2</code> is a Zener diode with zener voltage of 14V. When an input voltage above 14.5V (aprox.) is applied to the input, <code class="language-plaintext highlighter-rouge">D2</code> conducts current, forcing <code class="language-plaintext highlighter-rouge">Q1</code> into saturation (that is, Vce close to zero), thus, switching the P-channel MOSFET transistor <code class="language-plaintext highlighter-rouge">Q3</code> off. This way, overvoltage causes the whole circuit to be de-energized. Only the maximum voltage ratings of the input components limit the maximum input voltage, which can be up to 40V. Overvoltage protection is desired since some of the components of the circuit have a maximum voltage rating of 18V.</p>
+  </li>
+  <li>
+    <p><strong><em>Undervoltage:</em></strong> This one is not implemented by the input circuitry. There might be a discrete solution using zeners and transistors to implement undervoltage limits, but it was much easier to 
+do in software. Basically, at start up, the MCU checks all system voltages. If there’s an input voltage lower than nominal 12V, the boost converter won’t be enabled. This way, the boost controller is protected from working with duty cicle very close to 1.</p>
+  </li>
+  <li>
+    <p><strong><em>Inrush current:</em></strong> Needed for two reasons:</p>
+    <ul>
+      <li>The current spike produced in the connection process degrades the bulk capacitance in the circuit, and may produce MCU malfunction at start up.</li>
+      <li>The quality of the user’s power adapter is unkwnown, and there’s an alarmingly high amount of adapters without converter controller chips. This translates into power adapters not working, or producing big voltage sags in the connection moment, or outputting voltages different than 12V after connecting them. Thus, <a href="https://en.wikipedia.org/wiki/Inrush_current_limiter">Inrush Current Limitting</a> (ICL) is a safety measure against weak power sources.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>ICL is the most interesting, so it’s explained below.</p>
+
+<p>The goal is to switch on <code class="language-plaintext highlighter-rouge">Q3</code> slowly, in a controlled fashion, so that it remains in active mode (not in saturation) for a short period of time, such that it effectively acts as a resistor. This is achieved by slowly decreasing the Gate voltage (with respect to Source) using the RC  filter <code class="language-plaintext highlighter-rouge">C5</code> and <code class="language-plaintext highlighter-rouge">R6</code>. As soon as <code class="language-plaintext highlighter-rouge">Q3</code> reaches the threshold voltage, current starts flowing through the transistor and the voltage at <code class="language-plaintext highlighter-rouge">TP6</code> increases. <code class="language-plaintext highlighter-rouge">C6</code> and <code class="language-plaintext highlighter-rouge">R8</code> act as a feedback loop, so when voltage at <code class="language-plaintext highlighter-rouge">TP6</code> increases, current across <code class="language-plaintext highlighter-rouge">R6</code> also increases and <em>Vgs</em> (source-gate voltage) gets regulated. The whole transient effect results in a very nice ramp voltage from zero to 12 volts at <code class="language-plaintext highlighter-rouge">TP6</code> (the +12V rail), lasting a some milliseconds. This is shown in the image below.</p>
+
+<p><img src="/nixie_clock/assets/img/osc_icl.png" alt="osciloscope capture" /></p>
+
+<ul>
+	<li><strong style="color:gold">Yellow trace:</strong> Input voltage rail (from power adapter).</li>
+	<li><strong style="color:aqua">Blue trace:</strong> MOSFET gate voltage (with respect to ground).</li>
+	<li><strong style="color:purple">Purple trace:</strong> 12V rail (TP6).</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">R15</code> and <code class="language-plaintext highlighter-rouge">R16</code> sample the input voltage to be read by the MCU.</p>
 </div>
-            <div style="clear:both;">
-              <p class="text-center">
-                <br />
-                <a target="_blank" href="https://github.com/joselogreira/nixie_clock/docs//_docs/hardware/input.md" class="btn btn-default" role="button">
-                  <i class="fa fa-pencil fa-lg"></i> Improve this page
-                </a>
-              </p>
-            </div>
             <hr>
             
 

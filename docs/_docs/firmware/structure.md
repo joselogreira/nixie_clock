@@ -28,7 +28,7 @@ Some of these states include sub-states to implement some specific behavior or a
 
 The `main()` function includes an infinite loop in the form of a `switch() case:` structure. Each display state lies within one of the `case` statements in the form of a function call. When the _Display time_ state (just as example) is to be displayed (that is, active), the program execution jumps to the _Display time_ function, and remains inside the function for as long as the clock displays the time. Once the user switches to some other state, the function call returns and changes to the appropiate new function call. This is shown in the image below.
 
-< img. Typical program flow >
+![Program Flow](/nixie_clock/assets/img/program_flow.png "Typical program flow")
 
 This systems is event-based, meaning that program execution is determined by one of two things:
 * _User input_ in the form of buttons pushed.

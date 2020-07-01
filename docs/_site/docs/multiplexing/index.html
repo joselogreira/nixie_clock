@@ -15,15 +15,15 @@
 <meta name="generator" content="Jekyll v3.8.7" />
 <meta property="og:title" content="Tubes’ discrete multiplexing" />
 <meta property="og:locale" content="en_US" />
-<meta name="description" content="Documentation of The Nixie Tube Clock developed at Nuvitron and improved over time" />
-<meta property="og:description" content="Documentation of The Nixie Tube Clock developed at Nuvitron and improved over time" />
+<meta name="description" content="PDF schematic" />
+<meta property="og:description" content="PDF schematic" />
 <link rel="canonical" href="http://localhost:4000/nixie_clock/docs/multiplexing/" />
 <meta property="og:url" content="http://localhost:4000/nixie_clock/docs/multiplexing/" />
 <meta property="og:site_name" content="Nixie Tube Clock Documentation" />
 <meta property="og:type" content="article" />
-<meta property="article:published_time" content="2020-06-16T13:30:36-05:00" />
+<meta property="article:published_time" content="2020-06-30T19:04:04-05:00" />
 <script type="application/ld+json">
-{"datePublished":"2020-06-16T13:30:36-05:00","@type":"WebPage","dateModified":"2020-06-16T13:30:36-05:00","url":"http://localhost:4000/nixie_clock/docs/multiplexing/","description":"Documentation of The Nixie Tube Clock developed at Nuvitron and improved over time","headline":"Tubes’ discrete multiplexing","@context":"https://schema.org"}</script>
+{"@type":"WebPage","url":"http://localhost:4000/nixie_clock/docs/multiplexing/","description":"PDF schematic","headline":"Tubes’ discrete multiplexing","dateModified":"2020-06-30T19:04:04-05:00","datePublished":"2020-06-30T19:04:04-05:00","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 
 
@@ -51,7 +51,7 @@
 
                 <li  class="active" ><a href="/nixie_clock/docs/start/">Docs</a></li>
                 
-                <li ><a href="/nixie_clock/blog/2017/05/03/jekyll-doc-theme/">Blog</a></li>
+                <li ><a href="/nixie_clock/gallery/">Gallery</a></li>
 
             </ul>
             <div class="navbar-right">
@@ -153,16 +153,30 @@
 
         <div class="col-md-8">
             <h1>Tubes' discrete multiplexing</h1>
-            <div id="markdown-content-container">
+            <div id="markdown-content-container"><p><strong><a href="/nixie_clock/assets/pdf/nixie_clock_3.pdf" title="Schematic">PDF schematic</a></strong></p>
+
+<p>Multiplexing is mandatory. There’s just not enough pins in the MCU to directly drive evey tube.</p>
+
+<p>To multiplex tubes’ anodes, <a href="https://electronics.stackexchange.com/questions/188745/high-side-driver-and-low-side-driver">high side drivers</a> are needed. To multiplex tubes’ digits (cathodes), low side drivers are needed.</p>
+
+<p>At the time of sourcing the components, no integrated IC driver was found for 160V high side switching. It’s just too much voltage, so a discrete solution was implemented using high voltage transistors. Every tube anode required a pair of NPN-PNP transistors. For the digits multiplexing, discrete high voltage transistors were used.</p>
+
+<p><img src="/nixie_clock/assets/img/multiplexing.png" alt="Tubes' multiplexing" title="Tubes' Multiplexing" /></p>
+
+<p>An interesting addition were the resistors <code class="language-plaintext highlighter-rouge">R69</code> to <code class="language-plaintext highlighter-rouge">R77</code>. They’re all the same high value, and they all join each low side transistor’s drain terminal (or cathode terminal) with a floating common node for all digits. Why is that? The concept was taken from the reference design below <a href="https://www.pinitech.com/retrofit/schematics.php">found here</a>.</p>
+
+<p><img src="/nixie_clock/assets/img/bally7digit.png" alt="bally7digit" /></p>
+
+<p>Basically, <strong>not all tubes’ digits require the same voltage to glow</strong>, thus, when multiplexing, it happens that one digit being addressed requires more anode-to-cathode voltage than others not being addressed, thus, the voltage applied to the one being addressed is enough to lightly make the one not being addressed glow, and the current flow goes throgh the low-side driver of the digit being addressed. This is because inside the tubes, no electrical isolation exists between the digits. This is the origin of the so-called ghosting effect in nixie tubes.</p>
+
+<p>One solution is the one proposed: by tying all cathodes with high value resistors, only the addressed digit is fully ON, and all other cathodes are at a higher potential, that inhibits them from glowing. The solution is not perfect, but is simple and greatly reduces ghosting. Other solutions require more resistors, capacitors, zeners and the like, operating at high voltage, which requires way more space than what is available on the PCB (due to <a href="https://www.smps.us/pcbtracespacing.html">clearance and creepage distances</a>).</p>
+
+<h2 id="timing">Timing</h2>
+
+<p>Each tube’s anode is addressed for 5ms. During that time, the addressed tube’s digit is ON for 1 to 5ms. It depends on the fade level. That way, individual fading levels can be applied to each tube. This is useful for implementing animations or transition effects.</p>
+
+<p>Timing is completely controlled by ISRs. More on that, <a href="/nixie_clock/docs/isr/">here</a>.</p>
 </div>
-            <div style="clear:both;">
-              <p class="text-center">
-                <br />
-                <a target="_blank" href="https://github.com/joselogreira/nixie_clock/docs//_docs/hardware/multiplexing.md" class="btn btn-default" role="button">
-                  <i class="fa fa-pencil fa-lg"></i> Improve this page
-                </a>
-              </p>
-            </div>
             <hr>
             
 

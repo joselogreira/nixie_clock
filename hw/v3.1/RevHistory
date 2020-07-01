@@ -1,0 +1,108 @@
+Rev History
+
+VERSION 1:
+
+- Boost inductor has a strange land pattern. Remove all ground plane from behind (in the top copper)
+
+- GND test point in Boost output: change layer from fSilk to fMask!.
+
+- Bigger Vias Holes!!! specially for current signals like LEDs vias and HV vias
+
+- Fuse footprint size!: actual 0805. Change it to 0603
+
+- RGB LEDs land pattern is different: LED footprint must be smaller!!
+
+- Connectors for boards:
+	Vistrónica
+		>> https://www.vistronica.com/conectores-cables-y-switches/conector-macho-xh254-5p-detail.html
+		- https://www.vistronica.com/conectores-cables-y-switches/cable-conector-4p-2mm-20cm-detail.html
+		>> https://www.vistronica.com/conectores-cables-y-switches/cable-con-conector-xh254mm-5p-detail.html
+	Electronilab:  cable Grove
+		- http://electronilab.co/tienda/grove-conector-4-pines-universal-paquete-5/
+		- http://electronilab.co/tienda/grove-cable-conector-4-pines-universal-20-cm-paquete-de-5/
+	Didacticas Electrónicas:
+		- http://www.didacticaselectronicas.com/index.php/cables/con-conector
+		>> http://www.didacticaselectronicas.com/index.php/cables/cable-ribon-terminacion-h-h-5-pin-12-detail
+
+- Buttons examles:
+	- http://www.didacticaselectronicas.com/index.php/suiches-y-conectores/suiches-y-pulsadores/gravityboton-digital-azul-detail
+	- https://www.vistronica.com/conectores-cables-y-switches/interruptor-de-boton-rojo-12mm-detail.html
+
+VERSION 2:
+
+- Boost Inductor keepout area Added
+
+- GND test point in Boost output: fMask corrected.
+
+- Vias encanced!
+
+- Fuse footprint changed for 0603
+
+- RGB LEDs footprint adjusted
+
+VERSION 2.1:
+
+Changes made:
+
+	- GND pad for 5V test point alligned
+
+	- GND pad for HV test point alligned
+
+	- Enhanced mounting holes from 3.0mm to 3.2mm 
+
+FUTURE CHANGES:
+
+	- LEDs MUST BE IN A STRING FASHION, Not paralleled!, thus, using 12V supply!
+	- The "boot" (initialization section of code) must somehow detect that the test jig is installed and enter in test mode. There should be no human intervention pushing buttons for entering test mode. (Manual test mode should also be possible using the buttons)
+	- Remember digital wrist watch increment mechanism? while incrementing counts, the numbers wont blink!. implement it!!
+	- Take a look at the circuit failures: make a more robust error detection code!.
+	- Put clock crystal as far as possible from the switching (HV) nodes.
+	- Buttons and power connector must be changed to 2x5 instead of 2x4!. Also for the buttons board connector.
+	- Do not tent vias!: its just a reliability issue, to avoid chemichals being deposited inside the partially covered hole. Besides, bias without tempting receive the HASL finish coating.
+	- Review package sizes: uC, boost controller, RTC, LDO regulator.
+	- How much current (without LEDs that will consume from +12V) does the 5V regulator consume?? can we replace it by another of 50mA? is it worth it (price)?
+	- Input protection circuit: Evaluate implementation of OVP (no need of ICL circuit). No UVP implemented in the boost IC. Implement it using an ADC pin to read input voltage.
+	- LEDs PWM when in zero, the pin still outputs a pulse!, correct it!.
+	- choose a better, higher bandwidth 5V regulator! 'cuz the present one is highly affected by a 15KHz sag in the 12V rail, and distorts greatly the 5V rail.
+	- Lower the pullup resistor values for the I2C bus and verify waveform.
+	- The RTC includes a dissipation pad, not present in the IC!. take it out!.
+
+VERSION 2.2:
+
+Changes made:
+
+	- LEDs rearranged in 2 groups of strings: 2 dropping resistors added and new resistor values
+	- Connector P1 enlarged to 2x5 positions. components surrounding P1 rearranged
+	- Fuse thrown away.
+	- R18 1.5Kohm resistor replaced by two paralleled 3.6Kohms.
+	
+Future changes:
+
+	* this was a fast-iteration of the most imperative changes, but most of the previously stated changes haven't been implemented.
+
+VERSION 3:
+
+	- This is an entirely new circuit, based on the Atmega324PB, an MCU with more IO than the 328PB. Also includes an RTC unit, and improved sleep modes. Neither external independent RTC is needed, nor BCD-to-single-output converter.
+	- Most of the circuit is "borrowed" from the Resin Clock V2.
+	- This new desing incorporates the changes previously stated in version 2.1
+
+To Do Changes
+
+	- *** Decide wether to change the bulk capacitances: SMD to THT according to price. 	
+	- Remove D3. Not necesary. Will never be activated if the overvoltage protection gets activated.
+	- Diode packages should be unified. thus, D4 must be changed by an individual diode (SOD-323 package) and D11 & D12 change package for SOD-323.
+	- Add test point in 1Hz GPIO signal (currently connected to a LED)
+	- Correct RGB LED pin labels: Red and Blue (in package and in schematic)
+	- Correct Tube anondes' label in schematic: TubeA-TubeD and  TubeC-TubeB
+	- n8 and n9 labels are interchanged in the schematic!!!
+	- Rearrange voltage dividers for ADC measurements:
+		V_HV: R67 from 1.5k to 10k.
+		V_IN: R16 from 1k5 to 3k6
+		V_TST: R23 from 3k6 to 10k
+		V_CTL_REG: R19 from 10k to 3k6
+	- ADC AREF pin modified: not directly tied to AVCC, but to a bypass capacitor C30 (new). ADC voltage reference must be changed in software to AVCC
+
+VERSION 3.1:
+
+	- All changes were implemented, plus, a pull-down resistor in RX line, for software detection of a connected USB-serial bridge.
+	

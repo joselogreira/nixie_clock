@@ -1,0 +1,29 @@
+Drill report for C:\Users\User\Google Drive\1. Nixie Clocks\NC Actual\_pbc\v3.1\nixie_clock_3.kicad_pcb
+Created on 17/01/2019 09:26:22
+
+Copper Layer Stackup:
+    =============================================================
+    L1 :  F.Cu                      front
+    L2 :  B.Cu                      back
+
+
+Drill file 'nixie_clock_3.drl' contains
+    plated through holes:
+    =============================================================
+    T1  0.40mm  0.016"  (68 holes)
+    T2  0.50mm  0.020"  (20 holes)
+    T3  0.60mm  0.024"  (41 holes)
+    T4  0.70mm  0.028"  (2 holes)
+    T5  0.80mm  0.031"  (48 holes)
+    T6  0.90mm  0.035"  (7 holes)
+    T7  1.00mm  0.039"  (27 holes)
+
+    Total plated holes count 213
+
+
+Not plated through holes are merged with plated holes
+    unplated through holes:
+    =============================================================
+    T8  3.20mm  0.126"  (4 holes)
+
+    Total unplated holes count 4

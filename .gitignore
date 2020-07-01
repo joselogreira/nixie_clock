@@ -1,4 +1,11 @@
 
 # Output files
-output/*
+sw/output/*
+hw/programming&testing/*
+hw/v3.0/*
+hw/v3.1/BOM/*
+hw/v3.1/rescue-backup/*
+
 directories
+desktop.ini
+sym-lib-table
